@@ -1,0 +1,10 @@
+# 构建产物
+output/
+*.zip
+
+# 日志
+*.log
+
+# 系统文件
+.DS_Store
+Thumbs.db

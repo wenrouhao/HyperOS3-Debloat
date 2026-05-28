@@ -1,0 +1,41 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build ZIP
+        run: |
+          zip -r "HyperOS3-Debloat-${{ steps.version.outputs.VERSION }}.zip" . -x ".git/*" -x ".github/*" -x "*.md" -x ".gitignore"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: HyperOS3-Debloat ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## HyperOS3-Debloat ${{ steps.version.outputs.VERSION }}
+            
+            自制精简模块，HyperOS3专用。
+            
+            ### 安装方法
+            1. 下载 `HyperOS3-Debloat-${{ steps.version.outputs.VERSION }}.zip`
+            2. 在 KernelSU 管理器中从本地安装
+            3. 重启生效
+          files: HyperOS3-Debloat-${{ steps.version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: false
