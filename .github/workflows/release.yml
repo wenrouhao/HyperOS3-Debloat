@@ -1,41 +1,61 @@
-name: Build and Release
+name: Create Release
 
 on:
   push:
     tags:
       - 'v*'
 
-permissions:
-  contents: write
-
 jobs:
-  release:
+  create-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Get version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Build ZIP
+      - name: Extract changelog from commit message
+        id: changelog
         run: |
-          zip -r "HyperOS3-Debloat-${{ steps.version.outputs.VERSION }}.zip" . -x ".git/*" -x ".github/*" -x "*.md" -x ".gitignore"
+          # 获取 tag 对应的 commit message
+          COMMIT_MSG=$(git log -1 --pretty=format:"%B")
+          echo "COMMIT_MSG<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
           name: HyperOS3-Debloat ${{ steps.version.outputs.VERSION }}
           body: |
-            ## HyperOS3-Debloat ${{ steps.version.outputs.VERSION }}
-            
-            自制精简模块，HyperOS3专用。
-            
+            ## ${{ steps.version.outputs.VERSION }}
+
+            ${{ steps.changelog.outputs.COMMIT_MSG }}
+
+            ---
+
             ### 安装方法
             1. 下载 `HyperOS3-Debloat-${{ steps.version.outputs.VERSION }}.zip`
             2. 在 KernelSU 管理器中从本地安装
             3. 重启生效
-          files: HyperOS3-Debloat-${{ steps.version.outputs.VERSION }}.zip
-          draft: false
-          prerelease: false
+
+            ### 使用说明
+            - **音量+** = 确认当前选项
+            - **音量-** = 切换到下一个选项
+            - 选项会循环显示：1→2→3→4→1...
+
+            ### 精简模式
+            | 模式 | 说明 |
+            |------|------|
+            | 轻度精简（推荐） | 广告/推送/游戏/无障碍 |
+            | 中度精简 | +云服务/负一屏/汽车互联 |
+            | 极限精简 | +系统服务/窗口管理/AI引擎 |
+            | 自定义模式 | 逐组选择（16组） |
+          files: |
+            HyperOS3-Debloat-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
