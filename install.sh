@@ -329,6 +329,13 @@ on_install() {
     ui_print "  [--] 保留搜狗输入法"
   fi
 
+  uninstall_data_apps
+}
+
+uninstall_data_apps() {
+  echo "$REPLACE" | grep -q "MIUIGameCenter" && pm uninstall -k --user 0 com.xiaomi.gamecenter 2>/dev/null
+  echo "$REPLACE" | grep -q "MiuiScanner" && pm uninstall -k --user 0 com.xiaomi.scanner 2>/dev/null
+  echo "$REPLACE" | grep -q "DownloadProviderUi" && pm uninstall -k --user 0 com.android.providers.downloads.ui 2>/dev/null
 }
 
 set_permissions() {
