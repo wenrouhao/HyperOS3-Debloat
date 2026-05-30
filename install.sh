@@ -8,9 +8,11 @@ SKIPMOUNT=false
 REPLACE=""
 
 print_modname() {
+  local version=$(unzip -p "$ZIPFILE" module.prop 2>/dev/null | grep "^version=" | cut -d'=' -f2)
+  [ -z "$version" ] && version="unknown"
   ui_print " "
   ui_print "=================================="
-  ui_print "  HyperOS3 终极精简模块 v2.4.1"
+  ui_print "  HyperOS3 终极精简模块 $version"
   ui_print "  作者：温柔浩"
   ui_print "=================================="
   ui_print " "
@@ -46,16 +48,15 @@ choose_module() {
   local full_list="$5"
 
   ui_print " "
-  ui_print "  ┌─ $name ─────────────────────"
-  ui_print "  │ 音量+: $keep_desc"
-  ui_print "  │ 音量-: $full_desc"
-  ui_print "  └──────────────────────────────"
+  ui_print " - 是否精简${name}？"
+  ui_print "   音量+: $keep_desc"
+  ui_print "   音量-: $full_desc"
 
   if getVolumeKey; then
-    ui_print "  [OK] $keep_desc"
+    ui_print "   [OK] $keep_desc"
     [ -n "$keep_list" ] && add_to_replace $keep_list
   else
-    ui_print "  [X] $full_desc"
+    ui_print "   [X] $full_desc"
     add_to_replace $full_list
   fi
 }
@@ -68,40 +69,32 @@ select_mode() {
     ui_print " "
     case $mode in
       1)
-        ui_print "  ┌──────────────────────────────"
-        ui_print "  │ [1] 快速精简（推荐）"
-        ui_print "  │ 精简：广告/推送/游戏/无障碍"
-        ui_print "  │ 保留：所有核心功能"
-        ui_print "  │ 适合：大部分用户，安全无风险"
-        ui_print "  └──────────────────────────────"
+        ui_print " [1] 快速精简（推荐）"
+        ui_print "     精简：广告/推送/游戏/无障碍"
+        ui_print "     保留：所有核心功能"
+        ui_print "     适合：大部分用户，安全无风险"
         ;;
       2)
-        ui_print "  ┌──────────────────────────────"
-        ui_print "  │ [2] 标准精简"
-        ui_print "  │ 精简：广告/推送/游戏/无障碍"
-        ui_print "  │ +云服务/负一屏/汽车互联/应用商店"
-        ui_print "  │ 适合：不用小米云服务和汽车互联"
-        ui_print "  └──────────────────────────────"
+        ui_print " [2] 标准精简"
+        ui_print "     精简：广告/推送/游戏/无障碍"
+        ui_print "     +云服务/负一屏/汽车互联/应用商店"
+        ui_print "     适合：不用小米云服务和汽车互联"
         ;;
       3)
-        ui_print "  ┌──────────────────────────────"
-        ui_print "  │ [3] 深度精简"
-        ui_print "  │ 精简：标准精简全部内容"
-        ui_print "  │ +系统服务/窗口管理/AI引擎"
-        ui_print "  │ 适合：追求极致精简，可能影响功能"
-        ui_print "  └──────────────────────────────"
+        ui_print " [3] 深度精简"
+        ui_print "     精简：标准精简全部内容"
+        ui_print "     +系统服务/窗口管理/AI引擎"
+        ui_print "     适合：追求极致精简，可能影响功能"
         ;;
       4)
-        ui_print "  ┌──────────────────────────────"
-        ui_print "  │ [4] 自定义模式"
-        ui_print "  │ 每组功能单独选择保留或精简"
-        ui_print "  │ 音量+ = 保留核心"
-        ui_print "  │ 音量- = 全部精简"
-        ui_print "  └──────────────────────────────"
+        ui_print " [4] 自定义模式"
+        ui_print "     每组功能单独选择保留或精简"
+        ui_print "     音量+ = 保留核心"
+        ui_print "     音量- = 全部精简"
         ;;
     esac
 
-    ui_print "  音量+ 确认 / 音量- 切换"
+    ui_print "   音量+ 确认 / 音量- 切换"
 
     if getVolumeKey; then
       ui_print " "
