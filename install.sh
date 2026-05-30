@@ -10,7 +10,7 @@ REPLACE=""
 print_modname() {
   ui_print " "
   ui_print "=================================="
-  ui_print "  HyperOS3 终极精简模块 v2.4.0"
+  ui_print "  HyperOS3 终极精简模块 v2.4.1"
   ui_print "  作者：温柔浩"
   ui_print "=================================="
   ui_print " "
@@ -38,12 +38,6 @@ $path"
   done
 }
 
-# 通用模块选择函数
-# $1: 模块名称
-# $2: 音量+描述
-# $3: 音量-描述
-# $4: 音量+精简列表
-# $5: 音量-精简列表
 choose_module() {
   local name="$1"
   local keep_desc="$2"
@@ -51,9 +45,11 @@ choose_module() {
   local keep_list="$4"
   local full_list="$5"
 
-  ui_print "--- $name ---"
-  ui_print "  音量+：$keep_desc"
-  ui_print "  音量-：$full_desc"
+  ui_print " "
+  ui_print "  ┌─ $name ─────────────────────"
+  ui_print "  │ 音量+: $keep_desc"
+  ui_print "  │ 音量-: $full_desc"
+  ui_print "  └──────────────────────────────"
 
   if getVolumeKey; then
     ui_print "  [OK] $keep_desc"
@@ -69,30 +65,39 @@ select_mode() {
   local max_mode=4
 
   while true; do
+    ui_print " "
     case $mode in
       1)
-        ui_print "  ============================"
-        ui_print "  [1] 快速精简（推荐）"
-        ui_print "      一键精简广告/推送/游戏"
-        ui_print "  ============================"
+        ui_print "  ┌──────────────────────────────"
+        ui_print "  │ [1] 快速精简（推荐）"
+        ui_print "  │ 精简：广告/推送/游戏/无障碍"
+        ui_print "  │ 保留：所有核心功能"
+        ui_print "  │ 适合：大部分用户，安全无风险"
+        ui_print "  └──────────────────────────────"
         ;;
       2)
-        ui_print "  ============================"
-        ui_print "  [2] 标准精简"
-        ui_print "      +云服务/负一屏/汽车互联"
-        ui_print "  ============================"
+        ui_print "  ┌──────────────────────────────"
+        ui_print "  │ [2] 标准精简"
+        ui_print "  │ 精简：广告/推送/游戏/无障碍"
+        ui_print "  │ +云服务/负一屏/汽车互联/应用商店"
+        ui_print "  │ 适合：不用小米云服务和汽车互联"
+        ui_print "  └──────────────────────────────"
         ;;
       3)
-        ui_print "  ============================"
-        ui_print "  [3] 深度精简"
-        ui_print "      +系统服务/窗口管理/AI引擎"
-        ui_print "  ============================"
+        ui_print "  ┌──────────────────────────────"
+        ui_print "  │ [3] 深度精简"
+        ui_print "  │ 精简：标准精简全部内容"
+        ui_print "  │ +系统服务/窗口管理/AI引擎"
+        ui_print "  │ 适合：追求极致精简，可能影响功能"
+        ui_print "  └──────────────────────────────"
         ;;
       4)
-        ui_print "  ============================"
-        ui_print "  [4] 自定义模式"
-        ui_print "      每组可选保留核心或全精简"
-        ui_print "  ============================"
+        ui_print "  ┌──────────────────────────────"
+        ui_print "  │ [4] 自定义模式"
+        ui_print "  │ 每组功能单独选择保留或精简"
+        ui_print "  │ 音量+ = 保留核心"
+        ui_print "  │ 音量- = 全部精简"
+        ui_print "  └──────────────────────────────"
         ;;
     esac
 
@@ -105,30 +110,34 @@ select_mode() {
     else
       mode=$((mode + 1))
       [ $mode -gt $max_mode ] && mode=1
-      ui_print " "
     fi
   done
 }
 
 on_install() {
-  ui_print " ============================================"
-  ui_print "  使用说明："
-  ui_print "  音量+ = 确认/保留核心"
-  ui_print "  音量- = 切换/全部精简"
-  ui_print "  选项会循环显示：1->2->3->4->1..."
-  ui_print " ============================================"
   ui_print " "
-  ui_print " 选择精简模式："
+  ui_print " ============================================"
+  ui_print "  操作说明："
+  ui_print "  音量+ = 确认当前选项"
+  ui_print "  音量- = 切换到下一个选项"
+  ui_print "  选项循环：1 -> 2 -> 3 -> 4 -> 1..."
   ui_print " "
+  ui_print "  [1] [2] [3] 为预设模式，一键精简"
+  ui_print "  [4] 自定义模式，每组单独选择"
+  ui_print " ============================================"
 
   select_mode
   local choice=$?
 
+  ui_print " "
+  ui_print " ============================================"
+
   case $choice in
     1)
       ui_print "  [OK] 快速精简"
-      ui_print "  只精简广告/推送/游戏/无障碍"
-      ui_print "  保留所有核心功能"
+      ui_print "  精简：广告/推送/游戏/无障碍"
+      ui_print "  保留：所有核心功能"
+      ui_print " ============================================"
       add_to_replace \
         "/system/product/app/XiaoaiRecommendation" \
         "/system/product/app/AiasstVision" \
@@ -141,8 +150,9 @@ on_install() {
       ;;
     2)
       ui_print "  [OK] 标准精简"
-      ui_print "  精简广告/推送/游戏/无障碍"
+      ui_print "  精简：广告/推送/游戏/无障碍"
       ui_print "  +云服务/负一屏/汽车互联/互联互通"
+      ui_print " ============================================"
       add_to_replace \
         "/system/product/app/XiaoaiRecommendation" \
         "/system/product/app/AiasstVision" \
@@ -164,9 +174,10 @@ on_install() {
       ;;
     3)
       ui_print "  [OK] 深度精简"
-      ui_print "  精简广告/推送/游戏/无障碍"
+      ui_print "  精简：广告/推送/游戏/无障碍"
       ui_print "  +云服务/负一屏/汽车互联/互联互通"
       ui_print "  +系统服务/窗口管理/AI引擎"
+      ui_print " ============================================"
       add_to_replace \
         "/system/product/app/XiaoaiRecommendation" \
         "/system/product/app/AiasstVision" \
@@ -203,93 +214,80 @@ on_install() {
     4)
       ui_print "  [OK] 自定义模式"
       ui_print "  每组可选保留核心或全精简"
-      ui_print " "
+      ui_print " ============================================"
 
-      # AI/小爱模块
       choose_module "AI/小爱模块" \
         "保留核心（语音+唤醒）" \
         "全部精简（含小爱核心）" \
         "/system/product/app/AiasstVision" \
         "/system/product/app/XiaoaiRecommendation /system/product/app/AiasstVision"
 
-      # 搜索/游戏
       choose_module "搜索/游戏" \
         "保留搜索框" \
         "全部精简（搜索+游戏SDK）" \
         "/system/product/priv-app/MiGameCenterSDKService /system/product/priv-app/MiniGameService" \
         "/system/product/priv-app/MIUIQuickSearchBox /system/product/priv-app/MiGameCenterSDKService /system/product/priv-app/MiniGameService"
 
-      # 无障碍/宏
       choose_module "无障碍/宏" \
         "保留无障碍服务" \
         "全部精简（SwitchAccess+宏）" \
         "/system/product/app/com.xiaomi.macro /system/product/app/com.xiaomi.ugd" \
         "/system/product/app/SwitchAccess /system/product/app/com.xiaomi.macro /system/product/app/com.xiaomi.ugd"
 
-      # 系统预装
       choose_module "系统预装" \
         "保留下载管理" \
         "全部精简（下载+游戏+扫一扫）" \
         "/system/product/data-app/MIUIGameCenter /system/product/data-app/MiuiScanner" \
         "/system/product/data-app/DownloadProviderUi /system/product/data-app/MIUIGameCenter /system/product/data-app/MiuiScanner"
 
-      # 云备份
       choose_module "云备份" \
         "保留云服务基础" \
         "全部精简（云服务+同步+备份）" \
         "/system/product/app/MIUIMiCloudSync /system/product/priv-app/MIUICloudBackup" \
         "/system/product/app/MIUICloudService /system/product/app/MIUIMiCloudSync /system/product/priv-app/MIUICloudBackup"
 
-      # 跨屏协同
       choose_module "跨屏协同" \
         "保留基础投屏" \
         "全部精简（MirrorOS3）" \
         "" \
         "/system/product/priv-app/MirrorOS3"
 
-      # 汽车互联
       choose_module "汽车互联" \
         "保留基础连接" \
         "全部精简（CarWith+MIS）" \
         "/system/product/app/MIS" \
         "/system/product/app/CarWith /system/product/app/MIS"
 
-      # 互联互通
       choose_module "互联互通" \
         "保留基础连接" \
         "全部精简（MiLink+Lyra）" \
         "/system/product/app/LyraWOS3CN" \
         "/system/product/app/MiLinkOS3Cn /system/product/app/LyraWOS3CN"
 
-      # 澎湃AI引擎
       choose_module "澎湃AI引擎" \
         "保留基础AI服务" \
         "全部精简（MIUIAICR）" \
         "" \
         "/system/product/priv-app/MIUIAICR"
 
-      # 应用商店
       choose_module "应用商店" \
         "保留基础商店" \
         "全部精简（MIUISuperMarket）" \
         "" \
         "/system/product/app/MIUISuperMarket_M2_M3"
 
-      # 负一屏/弹幕
       choose_module "负一屏/弹幕" \
         "保留小组件/负一屏基础" \
         "全部精简（负一屏体系）" \
         "/system/product/priv-app/MiuiBarrage /system/product/priv-app/MIUIContentExtension" \
         "/system/product/priv-app/MIUIPersonalAssistantPhoneOS3 /system/product/priv-app/MiuiBarrage /system/product/priv-app/MIUIContentExtension"
 
-      # 窗口管理/报告/注册
       choose_module "窗口管理/报告/注册" \
         "保留窗口管理" \
         "全部精简（WMService+报告+注册）" \
         "/system/product/app/MIUIReporter /system/product/priv-app/AutoRegistration /system/product/priv-app/RegService" \
         "/system/product/app/WMService /system/product/app/MIUIReporter /system/product/priv-app/AutoRegistration /system/product/priv-app/RegService"
 
-      # system_ext服务
       choose_module "system_ext服务" \
         "保留MiSight+Daemon" \
         "全部精简（全部system_ext服务）" \
@@ -298,10 +296,12 @@ on_install() {
       ;;
   esac
 
-  # 危险项确认
   ui_print " "
-  ui_print "  [!!] 危险项确认（可跳过）："
+  ui_print " ============================================"
+  ui_print "  [!!] 危险项确认（可跳过）"
+  ui_print " ============================================"
 
+  ui_print " "
   ui_print "  NFC服务 - 门禁/公交卡/付款可能失效"
   ui_print "  音量+ 精简 / 音量- 保留"
   if getVolumeKey; then
@@ -311,6 +311,7 @@ on_install() {
     ui_print "  [--] 保留NFC"
   fi
 
+  ui_print " "
   ui_print "  系统安全组件 - 可能影响兼容性"
   ui_print "  音量+ 精简 / 音量- 保留"
   if getVolumeKey; then
@@ -320,6 +321,7 @@ on_install() {
     ui_print "  [--] 保留安全组件"
   fi
 
+  ui_print " "
   ui_print "  搜狗输入法 - 请确保有其他输入法"
   ui_print "  音量+ 精简 / 音量- 保留"
   if getVolumeKey; then
@@ -328,6 +330,11 @@ on_install() {
   else
     ui_print "  [--] 保留搜狗输入法"
   fi
+
+  ui_print " "
+  ui_print " ============================================"
+  ui_print "  正在应用精简..."
+  ui_print " ============================================"
 
   uninstall_data_apps
 }
