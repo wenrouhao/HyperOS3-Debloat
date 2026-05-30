@@ -29,62 +29,12 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
           ZIP_NAME="HyperOS3-Debloat-${VERSION}.zip"
-          
-          # 创建临时目录
-          mkdir -p /tmp/module
-          
-          # 复制模块文件
-          cp install.sh /tmp/module/
-          cp uninstall.sh /tmp/module/
-          cp module.prop /tmp/module/
-          
-          # 创建 META-INF 目录（KernelSU/Magisk 安装需要）
           mkdir -p /tmp/module/META-INF/com/google/android
+          cp install.sh uninstall.sh module.prop /tmp/module/
           echo '#MAGISK' > /tmp/module/META-INF/com/google/android/updater-script
-          cat > /tmp/module/META-INF/com/google/android/update-binary << 'BINARY'
-          #!/sbin/sh
-  
-  #################
-  # Initialization
-  #################
-  
-  umask 022
-  
-  # echo before loading util_functions
-  ui_print() { echo "$1"; }
-  
-  require_new_magisk() {
-    ui_print "*******************************"
-    ui_print " Please install Magisk v20.4+! "
-    ui_print "*******************************"
-    exit 1
-  }
-  
-  #########################
-  # Load util_functions.sh
-  #########################
-  
-  OUTFD=$2
-  ZIPFILE=$3
-  
-  mount /data 2>/dev/null
-  
-  [ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk
-  . /data/adb/magisk/util_functions.sh
-  [ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk
-  
-  install_module
-  exit 0
-  BINARY
-          
-          # 打包 zip
-          cd /tmp/module
-          zip -r "/tmp/${ZIP_NAME}" .
-          
-          # 复制到仓库目录
+          printf '#!/sbin/sh\numask 022\nui_print() { echo "$1"; }\nrequire_new_magisk() {\n  ui_print "*******************************"\n  ui_print " Please install Magisk v20.4+! "\n  ui_print "*******************************"\n  exit 1\n}\nOUTFD=$2\nZIPFILE=$3\nmount /data 2>/dev/null\n[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk\n. /data/adb/magisk/util_functions.sh\n[ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk\ninstall_module\nexit 0\n' > /tmp/module/META-INF/com/google/android/update-binary
+          cd /tmp/module && zip -r "/tmp/${ZIP_NAME}" .
           cp "/tmp/${ZIP_NAME}" ${GITHUB_WORKSPACE}/
-          
-          echo "Built: ${ZIP_NAME}"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
