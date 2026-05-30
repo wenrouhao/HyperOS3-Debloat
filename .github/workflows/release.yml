@@ -20,11 +20,71 @@ jobs:
       - name: Extract changelog from commit message
         id: changelog
         run: |
-          # 获取 tag 对应的 commit message
           COMMIT_MSG=$(git log -1 --pretty=format:"%B")
           echo "COMMIT_MSG<<EOF" >> $GITHUB_OUTPUT
           echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Build module zip
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          ZIP_NAME="HyperOS3-Debloat-${VERSION}.zip"
+          
+          # 创建临时目录
+          mkdir -p /tmp/module
+          
+          # 复制模块文件
+          cp install.sh /tmp/module/
+          cp uninstall.sh /tmp/module/
+          cp module.prop /tmp/module/
+          
+          # 创建 META-INF 目录（KernelSU/Magisk 安装需要）
+          mkdir -p /tmp/module/META-INF/com/google/android
+          echo '#MAGISK' > /tmp/module/META-INF/com/google/android/updater-script
+          cat > /tmp/module/META-INF/com/google/android/update-binary << 'BINARY'
+          #!/sbin/sh
+  
+  #################
+  # Initialization
+  #################
+  
+  umask 022
+  
+  # echo before loading util_functions
+  ui_print() { echo "$1"; }
+  
+  require_new_magisk() {
+    ui_print "*******************************"
+    ui_print " Please install Magisk v20.4+! "
+    ui_print "*******************************"
+    exit 1
+  }
+  
+  #########################
+  # Load util_functions.sh
+  #########################
+  
+  OUTFD=$2
+  ZIPFILE=$3
+  
+  mount /data 2>/dev/null
+  
+  [ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk
+  . /data/adb/magisk/util_functions.sh
+  [ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk
+  
+  install_module
+  exit 0
+  BINARY
+          
+          # 打包 zip
+          cd /tmp/module
+          zip -r "/tmp/${ZIP_NAME}" .
+          
+          # 复制到仓库目录
+          cp "/tmp/${ZIP_NAME}" ${GITHUB_WORKSPACE}/
+          
+          echo "Built: ${ZIP_NAME}"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -44,17 +104,17 @@ jobs:
             3. 重启生效
 
             ### 使用说明
-            - **音量+** = 确认当前选项
-            - **音量-** = 切换到下一个选项
-            - 选项会循环显示：1→2→3→4→1...
+            - **音量+** = 确认/保留核心
+            - **音量-** = 切换/全部精简
+            - 选项会循环显示：1->2->3->4->1...
 
             ### 精简模式
             | 模式 | 说明 |
             |------|------|
-            | 轻度精简（推荐） | 广告/推送/游戏/无障碍 |
-            | 中度精简 | +云服务/负一屏/汽车互联 |
-            | 极限精简 | +系统服务/窗口管理/AI引擎 |
-            | 自定义模式 | 逐组选择（16组） |
+            | 快速精简（推荐） | 广告/推送/游戏 |
+            | 标准精简 | +云服务/负一屏/汽车互联 |
+            | 深度精简 | +系统服务/窗口管理/AI引擎 |
+            | 自定义模式 | 每组可选保留核心或全精简 |
           files: |
             HyperOS3-Debloat-*.zip
         env:
