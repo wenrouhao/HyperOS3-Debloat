@@ -38,6 +38,12 @@ $path"
   done
 }
 
+# 通用模块选择函数
+# $1: 模块名称
+# $2: 音量+描述
+# $3: 音量-描述
+# $4: 音量+精简列表
+# $5: 音量-精简列表
 choose_module() {
   local name="$1"
   local keep_desc="$2"
@@ -46,8 +52,8 @@ choose_module() {
   local full_list="$5"
 
   ui_print "--- $name ---"
-  ui_print "  音量+: $keep_desc"
-  ui_print "  音量-: $full_desc"
+  ui_print "  音量+：$keep_desc"
+  ui_print "  音量-：$full_desc"
 
   if getVolumeKey; then
     ui_print "  [OK] $keep_desc"
@@ -199,78 +205,91 @@ on_install() {
       ui_print "  每组可选保留核心或全精简"
       ui_print " "
 
+      # AI/小爱模块
       choose_module "AI/小爱模块" \
         "保留核心（语音+唤醒）" \
         "全部精简（含小爱核心）" \
         "/system/product/app/AiasstVision" \
         "/system/product/app/XiaoaiRecommendation /system/product/app/AiasstVision"
 
+      # 搜索/游戏
       choose_module "搜索/游戏" \
         "保留搜索框" \
         "全部精简（搜索+游戏SDK）" \
         "/system/product/priv-app/MiGameCenterSDKService /system/product/priv-app/MiniGameService" \
         "/system/product/priv-app/MIUIQuickSearchBox /system/product/priv-app/MiGameCenterSDKService /system/product/priv-app/MiniGameService"
 
+      # 无障碍/宏
       choose_module "无障碍/宏" \
         "保留无障碍服务" \
         "全部精简（SwitchAccess+宏）" \
         "/system/product/app/com.xiaomi.macro /system/product/app/com.xiaomi.ugd" \
         "/system/product/app/SwitchAccess /system/product/app/com.xiaomi.macro /system/product/app/com.xiaomi.ugd"
 
+      # 系统预装
       choose_module "系统预装" \
         "保留下载管理" \
         "全部精简（下载+游戏+扫一扫）" \
         "/system/product/data-app/MIUIGameCenter /system/product/data-app/MiuiScanner" \
         "/system/product/data-app/DownloadProviderUi /system/product/data-app/MIUIGameCenter /system/product/data-app/MiuiScanner"
 
+      # 云备份
       choose_module "云备份" \
         "保留云服务基础" \
         "全部精简（云服务+同步+备份）" \
         "/system/product/app/MIUIMiCloudSync /system/product/priv-app/MIUICloudBackup" \
         "/system/product/app/MIUICloudService /system/product/app/MIUIMiCloudSync /system/product/priv-app/MIUICloudBackup"
 
+      # 跨屏协同
       choose_module "跨屏协同" \
         "保留基础投屏" \
         "全部精简（MirrorOS3）" \
         "" \
         "/system/product/priv-app/MirrorOS3"
 
+      # 汽车互联
       choose_module "汽车互联" \
         "保留基础连接" \
         "全部精简（CarWith+MIS）" \
         "/system/product/app/MIS" \
         "/system/product/app/CarWith /system/product/app/MIS"
 
+      # 互联互通
       choose_module "互联互通" \
         "保留基础连接" \
         "全部精简（MiLink+Lyra）" \
         "/system/product/app/LyraWOS3CN" \
         "/system/product/app/MiLinkOS3Cn /system/product/app/LyraWOS3CN"
 
+      # 澎湃AI引擎
       choose_module "澎湃AI引擎" \
         "保留基础AI服务" \
         "全部精简（MIUIAICR）" \
         "" \
         "/system/product/priv-app/MIUIAICR"
 
+      # 应用商店
       choose_module "应用商店" \
         "保留基础商店" \
         "全部精简（MIUISuperMarket）" \
         "" \
         "/system/product/app/MIUISuperMarket_M2_M3"
 
+      # 负一屏/弹幕
       choose_module "负一屏/弹幕" \
         "保留小组件/负一屏基础" \
         "全部精简（负一屏体系）" \
         "/system/product/priv-app/MiuiBarrage /system/product/priv-app/MIUIContentExtension" \
         "/system/product/priv-app/MIUIPersonalAssistantPhoneOS3 /system/product/priv-app/MiuiBarrage /system/product/priv-app/MIUIContentExtension"
 
+      # 窗口管理/报告/注册
       choose_module "窗口管理/报告/注册" \
         "保留窗口管理" \
         "全部精简（WMService+报告+注册）" \
         "/system/product/app/MIUIReporter /system/product/priv-app/AutoRegistration /system/product/priv-app/RegService" \
         "/system/product/app/WMService /system/product/app/MIUIReporter /system/product/priv-app/AutoRegistration /system/product/priv-app/RegService"
 
+      # system_ext服务
       choose_module "system_ext服务" \
         "保留MiSight+Daemon" \
         "全部精简（全部system_ext服务）" \
@@ -279,6 +298,7 @@ on_install() {
       ;;
   esac
 
+  # 危险项确认
   ui_print " "
   ui_print "  [!!] 危险项确认（可跳过）："
 
@@ -308,6 +328,7 @@ on_install() {
   else
     ui_print "  [--] 保留搜狗输入法"
   fi
+
 }
 
 set_permissions() {
