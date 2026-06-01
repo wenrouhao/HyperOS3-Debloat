@@ -153,6 +153,8 @@ select_mode() {
 }
 
 on_install() {
+  restore_data_apps
+
   ui_print " "
   ui_print " ============================================"
   ui_print "  📖 操作说明："
@@ -389,6 +391,14 @@ on_install() {
   else
     ui_print "  ❎ 已取消精简"
   fi
+}
+
+restore_data_apps() {
+  local old_record="/data/adb/modules/$MODID/.data_apps_removed"
+  [ -f "$old_record" ] || return
+  while IFS= read -r pkg; do
+    [ -n "$pkg" ] && pm install-existing --user 0 "$pkg" 2>/dev/null
+  done < "$old_record"
 }
 
 uninstall_data_apps() {
