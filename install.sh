@@ -20,23 +20,26 @@ print_modname() {
 
 getVolumeKey() {
   sleep 1
-  keyInfo=true
+  local keyInfo=true
   while $keyInfo; do
     keyInfo=$(getevent -qlc 1 | grep KEY_VOLUME)
     if [ "$keyInfo" == "" ]; then
       continue
     else
-      isUpKey=$(echo $keyInfo | grep KEY_VOLUMEUP)
+      local isUpKey=$(echo $keyInfo | grep KEY_VOLUMEUP)
       [ "$isUpKey" != "" ] && return 0 || return 1
-      break
     fi
   done
 }
 
 add_to_replace() {
-  for path in $@; do
-    REPLACE="$REPLACE
+  for path in "$@"; do
+    if [ -z "$REPLACE" ]; then
+      REPLACE="$path"
+    else
+      REPLACE="$REPLACE
 $path"
+    fi
   done
 }
 
@@ -56,26 +59,40 @@ choose_module() {
     [ $found -eq 0 ] && delete_list="$delete_list $item"
   done
 
+  local max_opt=3
+  [ -z "$delete_list" ] && max_opt=2
+
   while true; do
     ui_print " "
     ui_print " ───────────────────"
     ui_print " 📦 ${name}"
-    case $opt in
-      1) ui_print "   [1] ❌ 全部精简" ;;
-      2) ui_print "   [2] 🔧 $core_desc" ;;
-      3) ui_print "   [3] ✅ 全部保留" ;;
-    esac
+    if [ $max_opt -eq 2 ]; then
+      case $opt in
+        1) ui_print "   [1] ❌ 精简" ;;
+        2) ui_print "   [2] ✅ 保留" ;;
+      esac
+    else
+      case $opt in
+        1) ui_print "   [1] ❌ 全部精简" ;;
+        2) ui_print "   [2] 🔧 $core_desc" ;;
+        3) ui_print "   [3] ✅ 全部保留" ;;
+      esac
+    fi
     ui_print "   🔊音量+ 确认 / 🔊音量- 切换"
 
     if getVolumeKey; then
       case $opt in
         1)
-          ui_print "   ❌ 全部精简"
+          ui_print "   ❌ 精简"
           add_to_replace $full_list
           ;;
         2)
-          ui_print "   🔧 $core_desc"
-          [ -n "$delete_list" ] && add_to_replace $delete_list
+          if [ $max_opt -eq 2 ]; then
+            ui_print "   ✅ 保留"
+          else
+            ui_print "   🔧 $core_desc"
+            [ -n "$delete_list" ] && add_to_replace $delete_list
+          fi
           ;;
         3)
           ui_print "   ✅ 全部保留"
@@ -85,7 +102,7 @@ choose_module() {
       return
     else
       opt=$((opt + 1))
-      [ $opt -gt 3 ] && opt=1
+      [ $opt -gt $max_opt ] && opt=1
     fi
   done
 }
@@ -105,7 +122,7 @@ select_mode() {
         ;;
       2)
         ui_print " ⚡ [2] 标准精简"
-        ui_print "     精简：广告/推送/游戏/无障碍"
+        ui_print "     精简：广告/推送/游戏/无障碍/小爱视觉翻译"
         ui_print "     +云服务/跨屏协同/汽车互联/互联互通/应用商店"
         ui_print "     👉 适合：不用小米云服务和跨设备互联"
         ;;
@@ -170,7 +187,7 @@ on_install() {
       ;;
     2)
       ui_print "  ⚡ [OK] 标准精简"
-      ui_print "  精简：广告/推送/游戏/无障碍"
+      ui_print "  精简：广告/推送/游戏/无障碍/小爱视觉翻译"
       ui_print "  +云服务/跨屏协同/汽车互联/互联互通/应用商店"
       ui_print " ============================================"
       add_to_replace \
@@ -354,16 +371,42 @@ on_install() {
 
   ui_print " "
   ui_print " ============================================"
-  ui_print "  ⏳ 正在应用精简..."
+  ui_print "  📋 本次精简列表："
+  local count=0
+  for item in $REPLACE; do
+    local app=$(basename "$item")
+    ui_print "   ❌ $app"
+    count=$((count + 1))
+  done
+  ui_print "   共 $count 个应用"
+  ui_print " ============================================"
+  ui_print "  🔊音量+ 确认精简 / 🔊音量- 取消"
   ui_print " ============================================"
 
-  uninstall_data_apps
+  if getVolumeKey; then
+    ui_print "  ⏳ 正在应用精简..."
+    uninstall_data_apps
+  else
+    ui_print "  ❎ 已取消精简"
+  fi
 }
 
 uninstall_data_apps() {
-  echo "$REPLACE" | grep -q "MIUIGameCenter" && pm uninstall -k --user 0 com.xiaomi.gamecenter 2>/dev/null
-  echo "$REPLACE" | grep -q "MiuiScanner" && pm uninstall -k --user 0 com.xiaomi.scanner 2>/dev/null
-  echo "$REPLACE" | grep -q "DownloadProviderUi" && pm uninstall -k --user 0 com.android.providers.downloads.ui 2>/dev/null
+  local record_file="$MODPATH/.data_apps_removed"
+  : > "$record_file"
+
+  if echo "$REPLACE" | grep -q "MIUIGameCenter"; then
+    pm uninstall -k --user 0 com.xiaomi.gamecenter 2>/dev/null
+    echo "com.xiaomi.gamecenter" >> "$record_file"
+  fi
+  if echo "$REPLACE" | grep -q "MiuiScanner"; then
+    pm uninstall -k --user 0 com.xiaomi.scanner 2>/dev/null
+    echo "com.xiaomi.scanner" >> "$record_file"
+  fi
+  if echo "$REPLACE" | grep -q "DownloadProviderUi"; then
+    pm uninstall -k --user 0 com.android.providers.downloads.ui 2>/dev/null
+    echo "com.android.providers.downloads.ui" >> "$record_file"
+  fi
 }
 
 set_permissions() {
