@@ -41,9 +41,9 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.VERSION }}
           name: HyperOS3-Debloat ${{ steps.version.outputs.VERSION }}
-          draft: false
+          draft: ${{ contains(steps.version.outputs.VERSION, 'beta') || contains(steps.version.outputs.VERSION, 'alpha') || contains(steps.version.outputs.VERSION, 'rc') }}
           prerelease: false
-          make_latest: true
+          make_latest: ${{ !contains(steps.version.outputs.VERSION, 'beta') && !contains(steps.version.outputs.VERSION, 'alpha') && !contains(steps.version.outputs.VERSION, 'rc') }}
           body: |
             ## ${{ steps.version.outputs.VERSION }}
 
@@ -53,21 +53,42 @@ jobs:
 
             ### 安装方法
             1. 下载 `HyperOS3-Debloat-${{ steps.version.outputs.VERSION }}.zip`
-            2. 在 KernelSU 管理器中从本地安装
-            3. 重启生效
+            2. 打开 KernelSU 管理器 → 模块 → 从本地安装 → 选择下载的 ZIP
+            3. 等待安装完成，**不要重启**
+            4. 按照屏幕提示操作（使用音量键选择）
+            5. 操作完成后重启
 
             ### 使用说明
-            - **音量+** = 确认/保留核心
-            - **音量-** = 切换/全部精简
-            - 选项会循环显示：1->2->3->4->1...
+            | 按键 | 作用 |
+            |------|------|
+            | **音量+** | 确认当前选项 |
+            | **音量-** | 切换到下一个选项 |
+
+            选项会循环显示：`1 → 2 → 3 → 4 → 1...`
 
             ### 精简模式
-            | 模式 | 说明 |
-            |------|------|
-            | 快速精简（推荐） | 广告/推送/游戏 |
-            | 标准精简 | +云服务/负一屏/汽车互联 |
-            | 深度精简 | +系统服务/窗口管理/AI引擎 |
-            | 自定义模式 | 每组可选保留核心或全精简 |
+            | 模式 | 说明 | 适合 |
+            |------|------|------|
+            | 快速精简（推荐） | 广告追踪 + 游戏中心 | 大部分用户，安全无风险 |
+            | 标准精简 | +云服务/跨屏协同/汽车互联/互联互通 | 不用小米云服务和跨设备互联 |
+            | 深度精简 | +AI/小爱 + 负一屏/内容 + 系统服务 + 无障碍/宏 | 追求极致精简 |
+            | 自定义模式 | 每组功能单独选择，可逐个应用精简或保留 | 自由度最高 |
+
+            ### 危险项（可跳过）
+            | 危险项 | 风险 |
+            |--------|------|
+            | NFC 服务 | 门禁/公交卡/付款可能失效 |
+            | 系统安全组件 | 可能影响应用兼容性 |
+            | 搜狗输入法 | 请确保已安装其他输入法 |
+            | 讯飞输入法小米版 | 请确保已安装其他输入法 |
+            | Cell Broadcast Service | 精简后收不到地震/灾害预警 |
+            | 小米智能卡 | 精简后门禁/公交卡/付款全部失效 |
+            | 米币支付 | 精简后米币相关功能失效 |
+            | 小米应用商店 | 精简后无法通过官方商店下载应用 |
+
+            ### 适用环境
+            - 系统：HyperOS3
+            - 框架：KernelSU / Magisk
           files: |
             HyperOS3-Debloat-*.zip
         env:
