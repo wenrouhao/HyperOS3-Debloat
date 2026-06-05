@@ -23,14 +23,11 @@ print_modname() {
 # 获取音量键输入（音量+返回0，音量-返回1）
 getVolumeKey() {
   sleep 1
-  local keyInfo=true
-  while $keyInfo; do
-    keyInfo=$(getevent -qlc 1 | grep KEY_VOLUME)
-    if [ "$keyInfo" == "" ]; then
-      continue
-    else
-      local isUpKey=$(echo $keyInfo | grep KEY_VOLUMEUP)
-      [ "$isUpKey" != "" ] && return 0 || return 1
+  while true; do
+    local keyInfo=$(getevent -qlc 1 | grep KEY_VOLUME)
+    if [ -n "$keyInfo" ]; then
+      local isUpKey=$(echo "$keyInfo" | grep KEY_VOLUMEUP)
+      [ -n "$isUpKey" ] && return 0 || return 1
     fi
   done
 }
@@ -367,33 +364,69 @@ custom_mode() {
   fi
 }
 
-# 自定义模式：逐个应用选择（兼容 sh）
+# 自定义模式：逐个应用选择（兼容 sh，支持重选本组）
 # 参数：分组名 应用路径1 应用名1 应用路径2 应用名2 ...
 custom_group() {
   local group_name="$1"
   shift
   local total=$(( $# / 2 ))
-  local i=1
+  local all_args="$*"
+  local retry=true
 
-  ui_print " "
-  ui_print " 📦 ${group_name} - 逐个选择"
-  ui_print "   🔊音量+ 精简 / 🔊音量- 保留"
-
-  while [ $# -ge 2 ]; do
-    local app_path="$1"
-    local app_name="$2"
-    shift 2
+  while $retry; do
+    retry=false
+    local i=1
+    local group_selected=""
+    local args="$all_args"
 
     ui_print " "
-    ui_print "   [${i}/${total}] ${app_name}"
+    ui_print " 📦 ${group_name} - 逐个选择"
+    ui_print "   🔊音量+ 精简 / 🔊音量- 保留"
 
-    if getVolumeKey; then
-      add_to_replace "$app_path"
-      ui_print "     ❌ 精简"
-    else
-      ui_print "     ✅ 保留"
+    # 逐项选择
+    while [ -n "$args" ]; do
+      local app_path=$(echo "$args" | cut -d' ' -f1)
+      local app_name=$(echo "$args" | cut -d' ' -f2)
+      args=$(echo "$args" | cut -d' ' -f3-)
+
+      ui_print " "
+      ui_print "   [${i}/${total}] ${app_name}"
+
+      if getVolumeKey; then
+        add_to_replace "$app_path"
+        group_selected="$group_selected $app_path"
+        ui_print "     ❌ 精简"
+      else
+        ui_print "     ✅ 保留"
+      fi
+      i=$((i + 1))
+    done
+
+    # 显示本组结果
+    ui_print " "
+    ui_print " 📦 ${group_name} - 已选择："
+    local display_args="$all_args"
+    while [ -n "$display_args" ]; do
+      local d_path=$(echo "$display_args" | cut -d' ' -f1)
+      local d_name=$(echo "$display_args" | cut -d' ' -f2)
+      display_args=$(echo "$display_args" | cut -d' ' -f3-)
+      if echo "$group_selected" | grep -q "$d_path"; then
+        ui_print "   ❌ $d_name"
+      else
+        ui_print "   ✅ $d_name"
+      fi
+    done
+
+    # 确认/重选
+    ui_print " "
+    ui_print " 🔊音量+ 确认 / 🔊音量- 重选本组"
+    if ! getVolumeKey; then
+      # 重选：从 REPLACE 中移除本组已选
+      for p in $group_selected; do
+        REPLACE=$(echo "$REPLACE" | grep -v "$p")
+      done
+      retry=true
     fi
-    i=$((i + 1))
   done
 
   ui_print " "

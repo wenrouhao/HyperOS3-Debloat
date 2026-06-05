@@ -1,6 +1,6 @@
 id=HyperOS3_Debloat
 name=HyperOS3 终极精简模块
-version=v3.0.0
-versionCode=10
+version=v3.0.1
+versionCode=11
 author=温柔浩
 description=HyperOS3专用精简模块 | 4种模式：快速/标准/深度/自定义 | 音量+确认 音量-切换 | 自定义模式支持逐个应用选择
