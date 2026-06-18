@@ -56,12 +56,31 @@ $pkg"
   done
 }
 
+# 加载夹名→包名映射表
+unzip -o "$ZIPFILE" pkg_map.sh -d "$MODPATH" 2>/dev/null
+. $MODPATH/pkg_map.sh
+
+# 卸载 REPLACE 应用的 data 分区副本（防止用户更新过的应用绕过精简）
+uninstall_replace_apps() {
+  local record_file="$MODPATH/.data_apps_removed"
+  : > "$record_file"
+  for item in $REPLACE; do
+    local pkg=$(get_pkg_name "$item")
+    [ -z "$pkg" ] && continue
+    if pm uninstall -k --user 0 "$pkg" 2>/dev/null; then
+      echo "$pkg" >> "$record_file"
+    fi
+  done
+}
+
 # 执行 apex 应用卸载
 do_uninstall_apex() {
   [ -z "$APEX_APPS" ] && return
+  : > "$MODPATH/.apex_apps_removed"
   for pkg in $APEX_APPS; do
-    pm uninstall -k --user 0 "$pkg" 2>/dev/null
-    echo "$pkg" >> "$MODPATH/.apex_apps_removed"
+    if pm uninstall -k --user 0 "$pkg" 2>/dev/null; then
+      echo "$pkg" >> "$MODPATH/.apex_apps_removed"
+    fi
   done
 }
 
@@ -87,7 +106,7 @@ show_replace_list() {
 
   if getVolumeKey; then
     ui_print "  ⏳ 正在应用精简..."
-    uninstall_data_apps
+    uninstall_replace_apps
     do_uninstall_apex
   else
     ui_print "  ❎ 已取消精简"
@@ -199,7 +218,7 @@ custom_mode() {
   # 分组3：云服务/互联
   ui_print " "
   ui_print " 📦 [3/7] 云服务/互联"
-  ui_print "   包含：云服务+云同步+云备份+妙享+汽车互联+互联互通"
+  ui_print "   包含：云服务+云同步+云备份+妙享+汽车互联+互联互通+互联通信服务"
   ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
 
   if getVolumeKey; then
@@ -213,7 +232,8 @@ custom_mode() {
       "/system/product/app/CarWith" \
       "/system/product/app/MIS" \
       "/system/product/app/MiLinkOS3Cn" \
-      "/system/product/app/LyraWOS3CN"
+      "/system/product/app/LyraWOS3CN" \
+      "/system/product/app/MiConnectService"
   else
     # 音量- = 进入逐个选择
     custom_group "云服务/互联" \
@@ -224,7 +244,8 @@ custom_mode() {
       "/system/product/app/CarWith" "小米汽车互联" \
       "/system/product/app/MIS" "小米汽车互联服务" \
       "/system/product/app/MiLinkOS3Cn" "互联互通" \
-      "/system/product/app/LyraWOS3CN" "跨设备通信"
+      "/system/product/app/LyraWOS3CN" "跨设备通信" \
+      "/system/product/app/MiConnectService" "互联通信服务"
   fi
 
   # 分组4：广告/追踪
@@ -630,7 +651,8 @@ on_install() {
         "/system/product/app/CarWith" \
         "/system/product/app/MIS" \
         "/system/product/app/MiLinkOS3Cn" \
-        "/system/product/app/LyraWOS3CN"
+        "/system/product/app/LyraWOS3CN" \
+        "/system/product/app/MiConnectService"
       add_apex_app "com.android.adservices.api"
       ;;
     3)
@@ -654,6 +676,7 @@ on_install() {
         "/system/product/app/MIS" \
         "/system/product/app/MiLinkOS3Cn" \
         "/system/product/app/LyraWOS3CN" \
+        "/system/product/app/MiConnectService" \
         "/system/product/app/XiaoaiRecommendation" \
         "/system/product/app/VoiceAssistAndroidT" \
         "/system/product/app/VoiceTrigger" \
@@ -714,25 +737,6 @@ restore_data_apps() {
     while IFS= read -r pkg; do
       [ -n "$pkg" ] && pm install-existing --user 0 "$pkg" 2>/dev/null
     done < "$apex_record"
-  fi
-}
-
-# 精简data-app
-uninstall_data_apps() {
-  local record_file="$MODPATH/.data_apps_removed"
-  : > "$record_file"
-
-  if echo "$REPLACE" | grep -q "MIUIGameCenter"; then
-    pm uninstall -k --user 0 com.xiaomi.gamecenter 2>/dev/null
-    echo "com.xiaomi.gamecenter" >> "$record_file"
-  fi
-  if echo "$REPLACE" | grep -q "MiuiScanner"; then
-    pm uninstall -k --user 0 com.xiaomi.scanner 2>/dev/null
-    echo "com.xiaomi.scanner" >> "$record_file"
-  fi
-  if echo "$REPLACE" | grep -q "DownloadProviderUi"; then
-    pm uninstall -k --user 0 com.android.providers.downloads.ui 2>/dev/null
-    echo "com.android.providers.downloads.ui" >> "$record_file"
   fi
 }
 

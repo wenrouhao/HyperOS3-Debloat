@@ -1,5 +1,19 @@
 # 更新日志
 
+## v3.1.0
+
+### 新增
+- 新增"小米互联通信服务"（com.xiaomi.mi_connect_service）到云服务/互联分组
+- 新增包名映射表文件 `pkg_map.sh`，独立维护夹名→包名映射
+
+### 修复
+- 修复精简机制无法处理 data-app 副本的问题：用户手动更新过的应用会绕过 REPLACE 遮蔽，现在对所有 REPLACE 应用额外执行 `pm uninstall -k --user 0` 卸载 data 分区副本
+- 修复 `do_uninstall_apex()` 无条件写入记录文件的问题，改为只在卸载成功时记录
+
+### 重构
+- 包名映射表从 install.sh 提取到独立文件 `pkg_map.sh`
+- 删除旧的 `uninstall_data_apps()`，统一由 `uninstall_replace_apps()` 处理所有 REPLACE 应用的 data 副本卸载和记录
+
 ## v3.0.1
 
 ### 修复
