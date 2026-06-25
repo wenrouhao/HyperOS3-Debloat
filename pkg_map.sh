@@ -57,6 +57,25 @@ MINextpay=com.miui.nextpay
 MITSMClient=com.miui.tsmclient
 PaymentService=com.xiaomi.payment
 MIUISuperMarket_M2_M3=com.xiaomi.market
+MIShare=com.miui.mishare.connectivity
+ContentCatcherOS3_1=com.miui.contentcatcher
+MIUIYellowPage=com.miui.yellowpage
+MIGalleryLockscreen=
+MIUIMiDrive=
+MIUIMusicT=
+MiBugReportOS3=com.miui.bugreport
+hybrid=
+greenguard=
+RideModeAudio=com.qualcomm.qti.ridemodeaudio
+ThirdAppAssistant=com.miui.thirdappassistant
+digitalkey=com.xiaomi.digitalkey
+MIUITouchAssistant=com.miui.touchassistant
+Stk=com.android.stk
+CarrierDefaultApp=com.android.carrierdefaultapp
+CallLogBackup=com.android.calllogbackup
+ConfigUpdater=
+CatchLog=com.bsp.catchlog
+TouchService=com.xiaomi.touchservice
 "
 
 # 根据 REPLACE 路径获取包名

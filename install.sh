@@ -136,7 +136,7 @@ select_mode() {
       3)
         ui_print " 🔥 [3] 深度精简"
         ui_print "     精简：标准精简全部内容"
-        ui_print "     +AI/小爱 + 负一屏/内容 + 系统服务 + 无障碍/宏"
+        ui_print "     +AI/小爱 + 内容/工具/安全 + 系统服务 + 无障碍/宏"
         ui_print "     ⚠️ 适合：追求极致精简，可能影响功能"
         ;;
       4)
@@ -215,10 +215,10 @@ custom_mode() {
       "/system/product/app/MiGameService_8550" "游戏高能时刻"
   fi
 
-  # 分组3：云服务/互联
+  # 分组3：设备互联/生态
   ui_print " "
-  ui_print " 📦 [3/7] 云服务/互联"
-  ui_print "   包含：云服务+云同步+云备份+妙享+汽车互联+互联互通+互联通信服务"
+  ui_print " 📦 [3/7] 设备互联/生态"
+  ui_print "   包含：云服务+云同步+云备份+妙享+汽车互联+互联互通+互联通信+数字钥匙+骑行"
   ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
 
   if getVolumeKey; then
@@ -233,10 +233,12 @@ custom_mode() {
       "/system/product/app/MIS" \
       "/system/product/app/MiLinkOS3Cn" \
       "/system/product/app/LyraWOS3CN" \
-      "/system/product/app/MiConnectService"
+      "/system/product/app/MiConnectService" \
+      "/system_ext/app/digitalkey" \
+      "/product/app/RideModeAudio"
   else
     # 音量- = 进入逐个选择
-    custom_group "云服务/互联" \
+    custom_group "设备互联/生态" \
       "/system/product/app/MIUICloudService" "小米云服务" \
       "/system/product/app/MIUIMiCloudSync" "小米云同步" \
       "/system/product/priv-app/MIUICloudBackup" "小米云备份" \
@@ -245,7 +247,9 @@ custom_mode() {
       "/system/product/app/MIS" "小米汽车互联服务" \
       "/system/product/app/MiLinkOS3Cn" "互联互通" \
       "/system/product/app/LyraWOS3CN" "跨设备通信" \
-      "/system/product/app/MiConnectService" "互联通信服务"
+      "/system/product/app/MiConnectService" "互联通信服务" \
+      "/system_ext/app/digitalkey" "数字钥匙" \
+      "/product/app/RideModeAudio" "骑行模式"
   fi
 
   # 分组4：广告/追踪
@@ -280,10 +284,10 @@ custom_mode() {
     fi
   fi
 
-  # 分组5：负一屏/内容
+  # 分组5：内容/工具/安全
   ui_print " "
-  ui_print " 📦 [5/7] 负一屏/内容"
-  ui_print "   包含：智能助理+弹幕通知+内容扩展"
+  ui_print " 📦 [5/7] 内容/工具/安全"
+  ui_print "   包含：智能助理+弹幕通知+内容扩展+画报+云盘+反馈+快应用+黄页+三方分析+扩展服务+悬浮球+家人守护"
   ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
 
   if getVolumeKey; then
@@ -292,13 +296,31 @@ custom_mode() {
     add_to_replace \
       "/system/product/priv-app/MIUIPersonalAssistantPhoneOS3" \
       "/system/product/priv-app/MiuiBarrage" \
-      "/system/product/priv-app/MIUIContentExtension"
+      "/system/product/priv-app/MIUIContentExtension" \
+      "/product/app/MIGalleryLockscreen" \
+      "/product/app/MIUIMiDrive" \
+      "/product/app/MiBugReportOS3" \
+      "/product/app/hybrid" \
+      "/product/priv-app/MIUIYellowPage" \
+      "/product/app/ThirdAppAssistant" \
+      "/product/app/ContentCatcherOS3_1" \
+      "/product/app/MIUITouchAssistant" \
+      "/product/app/greenguard"
   else
     # 音量- = 进入逐个选择
-    custom_group "负一屏/内容" \
+    custom_group "内容/工具/安全" \
       "/system/product/priv-app/MIUIPersonalAssistantPhoneOS3" "智能助理" \
       "/system/product/priv-app/MiuiBarrage" "弹幕通知" \
-      "/system/product/priv-app/MIUIContentExtension" "内容扩展"
+      "/system/product/priv-app/MIUIContentExtension" "内容扩展" \
+      "/product/app/MIGalleryLockscreen" "小米画报" \
+      "/product/app/MIUIMiDrive" "小米云盘" \
+      "/product/app/MiBugReportOS3" "用户反馈" \
+      "/product/app/hybrid" "快应用服务" \
+      "/product/priv-app/MIUIYellowPage" "黄页" \
+      "/product/app/ThirdAppAssistant" "三方应用异常分析" \
+      "/product/app/ContentCatcherOS3_1" "应用扩展服务" \
+      "/product/app/MIUITouchAssistant" "悬浮球" \
+      "/product/app/greenguard" "家人守护"
   fi
 
   # 分组6：系统服务
@@ -328,7 +350,13 @@ custom_mode() {
       "/system/system_ext/priv-app/com.qualcomm.qti.services.systemhelper" \
       "/system/priv-app/SystemHelper" \
       "/system/product/priv-app/MetokNLP" \
-      "/system/product/priv-app/MIUIQuickSearchBox"
+      "/system/product/priv-app/MIUIQuickSearchBox" \
+      "/system/app/Stk" \
+      "/system/app/CarrierDefaultApp" \
+      "/system/priv-app/CallLogBackup" \
+      "/product/priv-app/ConfigUpdater" \
+      "/product/app/CatchLog" \
+      "/system_ext/priv-app/TouchService"
     add_apex_app "com.android.healthconnect.controller"
   else
     # 音量- = 进入逐个选择
@@ -350,10 +378,16 @@ custom_mode() {
       "/system/system_ext/priv-app/com.qualcomm.qti.services.systemhelper" "系统助手" \
       "/system/priv-app/SystemHelper" "SystemHelper" \
       "/system/product/priv-app/MetokNLP" "网络位置服务" \
-      "/system/product/priv-app/MIUIQuickSearchBox" "全局搜索"
+      "/system/product/priv-app/MIUIQuickSearchBox" "全局搜索" \
+      "/system/app/Stk" "SIM卡应用" \
+      "/system/app/CarrierDefaultApp" "运营商通知" \
+      "/system/priv-app/CallLogBackup" "通话记录备份" \
+      "/product/priv-app/ConfigUpdater" "谷歌后台更新" \
+      "/product/app/CatchLog" "日志抓取" \
+      "/system_ext/priv-app/TouchService" "触摸轨迹服务"
     # apex 应用单独处理
     ui_print " "
-    ui_print "   [19/19] 健康数据共享（apex）"
+    ui_print "   [25/25] 健康数据共享（apex）"
     ui_print "     🔊音量+ 精简 / 🔊音量- 保留"
     if getVolumeKey; then
       add_apex_app "com.android.healthconnect.controller"
@@ -462,6 +496,16 @@ custom_group_with_shortcut() {
   local total=$(( $# / 2 ))
   local opt=1
   local all_args="$@"
+
+  # 先显示本组应用列表
+  ui_print " "
+  ui_print " 📦 ${group_name}（${total}项）"
+  local _show_args="$all_args"
+  while [ -n "$_show_args" ]; do
+    local _s_name=$(echo "$_show_args" | cut -d' ' -f2)
+    ui_print "   · $_s_name"
+    _show_args=$(echo "$_show_args" | cut -d' ' -f3-)
+  done
 
   ui_print " "
   ui_print " 📦 ${group_name} - 选择方式"
@@ -652,13 +696,15 @@ on_install() {
         "/system/product/app/MIS" \
         "/system/product/app/MiLinkOS3Cn" \
         "/system/product/app/LyraWOS3CN" \
-        "/system/product/app/MiConnectService"
+        "/system/product/app/MiConnectService" \
+        "/system_ext/app/digitalkey" \
+        "/product/app/RideModeAudio"
       add_apex_app "com.android.adservices.api"
       ;;
     3)
       ui_print "  🔥 [OK] 深度精简"
       ui_print "  精简：标准精简全部内容"
-      ui_print "  +AI/小爱 + 负一屏/内容 + 系统服务 + 无障碍/宏"
+      ui_print "  +AI/小爱 + 内容/工具/安全 + 系统服务 + 无障碍/宏"
       ui_print " ============================================"
       add_to_replace \
         "/system/product/app/MSA" \
@@ -677,6 +723,8 @@ on_install() {
         "/system/product/app/MiLinkOS3Cn" \
         "/system/product/app/LyraWOS3CN" \
         "/system/product/app/MiConnectService" \
+        "/system_ext/app/digitalkey" \
+        "/product/app/RideModeAudio" \
         "/system/product/app/XiaoaiRecommendation" \
         "/system/product/app/VoiceAssistAndroidT" \
         "/system/product/app/VoiceTrigger" \
@@ -686,6 +734,15 @@ on_install() {
         "/system/product/priv-app/MIUIPersonalAssistantPhoneOS3" \
         "/system/product/priv-app/MiuiBarrage" \
         "/system/product/priv-app/MIUIContentExtension" \
+        "/product/app/MIGalleryLockscreen" \
+        "/product/app/MIUIMiDrive" \
+        "/product/app/MiBugReportOS3" \
+        "/product/app/hybrid" \
+        "/product/priv-app/MIUIYellowPage" \
+        "/product/app/ThirdAppAssistant" \
+        "/product/app/ContentCatcherOS3_1" \
+        "/product/app/MIUITouchAssistant" \
+        "/product/app/greenguard" \
         "/system/product/data-app/DownloadProviderUi" \
         "/system/product/data-app/MiuiScanner" \
         "/system/priv-app/BuiltInPrintService" \
@@ -704,9 +761,18 @@ on_install() {
         "/system/priv-app/SystemHelper" \
         "/system/product/priv-app/MetokNLP" \
         "/system/product/priv-app/MIUIQuickSearchBox" \
+        "/system/app/Stk" \
+        "/system/app/CarrierDefaultApp" \
+        "/system/priv-app/CallLogBackup" \
+        "/product/priv-app/ConfigUpdater" \
+        "/product/app/CatchLog" \
+        "/system_ext/priv-app/TouchService" \
         "/system/product/app/SwitchAccess" \
         "/system/product/app/com.xiaomi.macro" \
         "/system/product/app/com.xiaomi.ugd"
+        "/product/priv-app/ConfigUpdater" \
+        "/product/app/CatchLog" \
+        "/system_ext/priv-app/TouchService"
       add_apex_app "com.android.adservices.api" "com.android.healthconnect.controller"
       ;;
     4)
