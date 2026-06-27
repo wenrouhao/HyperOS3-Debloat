@@ -635,7 +635,7 @@
       const match = stdout.match(/^version=(.+)$/m);
       if (match) {
         const el = document.getElementById("headerVersion");
-        if (el) el.textContent = "v" + match[1].trim() + " \xB7 KernelSU Module";
+        if (el) el.textContent = match[1].trim() + " \xB7 KernelSU Module";
       }
     } catch (e) {
     }
@@ -749,6 +749,14 @@
       container.innerHTML = '<div class="empty-state"><div class="empty-icon">\u{1F50D}</div><div class="empty-text">\u672A\u627E\u5230\u5339\u914D\u7684\u5E94\u7528</div></div>';
     }
     bindToggles();
+    const firstBody = container.querySelector(".group.open .group-body");
+    if (firstBody) {
+      firstBody.style.maxHeight = firstBody.scrollHeight + "px";
+      firstBody.style.opacity = "1";
+      setTimeout(() => {
+        firstBody.style.maxHeight = "none";
+      }, 300);
+    }
   }
   function bindToggles() {
     document.querySelectorAll(".toggle-wrap").forEach((toggle) => {

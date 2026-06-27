@@ -122,7 +122,7 @@ async function syncVersion() {
         const match = stdout.match(/^version=(.+)$/m);
         if (match) {
             const el = document.getElementById('headerVersion');
-            if (el) el.textContent = 'v' + match[1].trim() + ' · KernelSU Module';
+            if (el) el.textContent = match[1].trim() + ' · KernelSU Module';
         }
     } catch(e) {}
 }
@@ -269,6 +269,14 @@ function render() {
     }
 
     bindToggles();
+
+    // 初始化第一个分组展开状态
+    const firstBody = container.querySelector('.group.open .group-body');
+    if (firstBody) {
+        firstBody.style.maxHeight = firstBody.scrollHeight + 'px';
+        firstBody.style.opacity = '1';
+        setTimeout(() => { firstBody.style.maxHeight = 'none'; }, 300);
+    }
 }
 
 function bindToggles() {
