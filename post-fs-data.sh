@@ -12,10 +12,42 @@ if [ -f "$LOG_FILE" ]; then
   find "$LOG_FILE" -mtime +3 -exec truncate -s 0 {} \; 2>/dev/null
 fi
 
+# 从 apps.db 同步 apps.conf（新增应用默认保留，已有应用保留用户设置）
+APPS_DB="$MODPATH/apps.db"
+if [ -f "$APPS_DB" ]; then
+  # 读取旧配置的状态
+  OLD_STATUS=""
+  if [ -f "$APPS_CONF" ]; then
+    while IFS='|' read -r _p _n _s _st _g; do
+      [ -z "$_p" ] && continue; case "$_p" in \#*) continue ;; esac
+      OLD_STATUS="$OLD_STATUS
+$_p=$_st"
+    done < "$APPS_CONF"
+  fi
+
+  # 从 apps.db 生成新配置，保留旧状态
+  TMP_CONF="$MODPATH/webroot/apps.conf.tmp"
+  echo "# HyperOS3 Debloat 配置" > "$TMP_CONF"
+  echo "# 格式：路径|显示名|包名|状态（1=精简 0=保留）|分组" >> "$TMP_CONF"
+  while IFS= read -r line; do
+    case "$line" in \#*|"") continue ;; esac
+    path=$(echo "$line" | cut -d'|' -f1)
+    display=$(echo "$line" | cut -d'|' -f2)
+    pkg=$(echo "$line" | cut -d'|' -f3)
+    group=$(echo "$line" | cut -d'|' -f4)
+    # 查找旧状态，默认 0（保留）
+    status=0
+    old=$(echo "$OLD_STATUS" | grep "^$path=" | tail -1)
+    [ -n "$old" ] && status="${old#*=}"
+    echo "$path|$display|$pkg|$status|$group" >> "$TMP_CONF"
+  done < "$APPS_DB"
+  mv "$TMP_CONF" "$APPS_CONF"
+fi
+
 # apps.conf 不存在则跳过
 [ -f "$APPS_CONF" ] || exit 0
 
-# 1. 清除上次创建的 REPLACE 目录
+# 清除上次创建的 REPLACE 目录
 if [ -f "$RECORD_FILE" ]; then
   while IFS= read -r dir; do
     [ -d "$dir" ] && rm -rf "$dir"
