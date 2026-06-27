@@ -88,6 +88,11 @@ generate_apps_conf() {
     local group=$(echo "$line" | cut -d'|' -f4)
     local status=0
     echo "$REPLACE" | grep -qxF "$path" && status=1
+    # APEX 应用检查
+    case "$path" in apex:*)
+      local apex_pkg="${path#apex:}"
+      echo "$APEX_APPS" | grep -qxF "$apex_pkg" && status=1
+    ;; esac
     echo "$path|$display|$pkg|$status|$group" >> "$conf"
   done < "$APPS_DB"
 }
@@ -223,12 +228,11 @@ custom_mode() {
     if getVolumeKey; then
       ui_print "   ❌ 精简此组"
       for app_path in $group_apps; do
-        add_to_replace "$app_path"
+        case "$app_path" in
+          apex:*) add_apex_app "${app_path#apex:}" ;;
+          *) add_to_replace "$app_path" ;;
+        esac
       done
-      # 广告/追踪分组额外添加 apex 应用
-      [ "$group_name" = "广告/追踪" ] && add_apex_app "com.android.adservices.api"
-      # 系统服务分组额外添加 apex 应用
-      [ "$group_name" = "系统服务" ] && add_apex_app "com.android.healthconnect.controller"
     else
       # 构建 custom_group 参数：路径1 名称1 路径2 名称2 ...
       local group_args=""
@@ -298,7 +302,10 @@ custom_group() {
       ui_print "   [${i}/${total}] ${app_name}"
 
       if getVolumeKey; then
-        add_to_replace "$app_path"
+        case "$app_path" in
+          apex:*) add_apex_app "${app_path#apex:}" ;;
+          *) add_to_replace "$app_path" ;;
+        esac
         group_selected="$group_selected $app_path"
         ui_print "     ❌ 精简"
       else
@@ -378,7 +385,10 @@ custom_group_with_shortcut() {
           while [ -n "$_args" ]; do
             _path=$(echo "$_args" | cut -d' ' -f1)
             _name=$(echo "$_args" | cut -d' ' -f2)
-            add_to_replace "$_path"
+            case "$_path" in
+              apex:*) add_apex_app "${_path#apex:}" ;;
+              *) add_to_replace "$_path" ;;
+            esac
             _args=$(echo "$_args" | cut -d' ' -f3-)
           done
           ;;
@@ -507,7 +517,10 @@ on_install() {
         [ -z "$path" ] && continue
         case "$path" in \#*) continue ;; esac
         if [ "$status" = "1" ]; then
-          add_to_replace "$path"
+          case "$path" in
+            apex:*) add_apex_app "${path#apex:}" ;;
+            *) add_to_replace "$path" ;;
+          esac
         fi
       done < "$old_conf"
       # 生成新配置（data 副本已在上次安装时卸载，REPLACE 会遮蔽系统版本）

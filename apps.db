@@ -91,3 +91,5 @@
 /system/product/app/MITSMClient|小米智能卡服务|com.miui.tsmclient|危险项
 /system/product/app/PaymentService|米币支付|com.xiaomi.payment|危险项
 /system/product/app/MIUISuperMarket_M2_M3|小米应用商店|com.xiaomi.market|危险项
+apex:com.android.adservices.api|广告隐私权|com.android.adservices.api|广告/追踪
+apex:com.android.healthconnect.controller|健康数据共享|com.android.healthconnect.controller|系统服务

@@ -60,6 +60,16 @@ while IFS='|' read -r path name pkg status group; do
   [ -z "$path" ] && continue
   case "$path" in \#*) continue ;; esac
 
+  # APEX 应用：用 pm uninstall 处理
+  case "$path" in apex:*)
+    if [ "$status" = "1" ] && [ -n "$pkg" ]; then
+      pm uninstall -k --user 0 "$pkg" >/dev/null 2>&1
+    else
+      [ -n "$pkg" ] && pm install-existing --user 0 "$pkg" >/dev/null 2>&1
+    fi
+    continue
+  ;; esac
+
   if [ "$status" = "1" ]; then
     # 创建 REPLACE 目录
     mod_dir="$MODPATH/$path"
@@ -69,5 +79,8 @@ while IFS='|' read -r path name pkg status group; do
 
     # 卸载 data 副本
     [ -n "$pkg" ] && pm uninstall -k --user 0 "$pkg" >/dev/null 2>&1
+  else
+    # 恢复被取消精简的应用
+    [ -n "$pkg" ] && pm install-existing --user 0 "$pkg" >/dev/null 2>&1
   fi
 done < "$APPS_CONF"
