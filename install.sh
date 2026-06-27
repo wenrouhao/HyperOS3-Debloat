@@ -56,8 +56,8 @@ $pkg"
   done
 }
 
-# 加载夹名→包名映射表
-unzip -o "$ZIPFILE" pkg_map.sh -d "$MODPATH" 2>/dev/null
+# 解压数据文件
+unzip -o "$ZIPFILE" -d "$MODPATH" 2>/dev/null
 . $MODPATH/pkg_map.sh
 
 # 卸载 REPLACE 应用的 data 分区副本（防止用户更新过的应用绕过精简）
@@ -67,9 +67,37 @@ uninstall_replace_apps() {
   for item in $REPLACE; do
     local pkg=$(get_pkg_name "$item")
     [ -z "$pkg" ] && continue
-    if pm uninstall -k --user 0 "$pkg" 2>/dev/null; then
+    if pm uninstall -k --user 0 "$pkg" >/dev/null 2>&1; then
       echo "$pkg" >> "$record_file"
     fi
+  done
+}
+
+# 生成 apps.conf 配置文件（供 WebUI 和 post-fs-data.sh 使用）
+generate_apps_conf() {
+  local conf="$MODPATH/webroot/apps.conf"
+  mkdir -p "$MODPATH/webroot"
+  echo "# HyperOS3 Debloat 配置" > "$conf"
+  echo "# 格式：路径|显示名|包名|状态（1=精简 0=保留）|分组" >> "$conf"
+  local line
+  while IFS= read -r line; do
+    case "$line" in \#*|"") continue ;; esac
+    local path=$(echo "$line" | cut -d'|' -f1)
+    local display=$(echo "$line" | cut -d'|' -f2)
+    local pkg=$(echo "$line" | cut -d'|' -f3)
+    local group=$(echo "$line" | cut -d'|' -f4)
+    local status=0
+    echo "$REPLACE" | grep -qxF "$path" && status=1
+    echo "$path|$display|$pkg|$status|$group" >> "$conf"
+  done < "$APPS_DB"
+}
+
+# 记录 REPLACE 目录（供 post-fs-data.sh 清理）
+record_replace_dirs() {
+  local record="$MODPATH/.debloat_record"
+  : > "$record"
+  for item in $REPLACE; do
+    echo "$MODPATH/$item" >> "$record"
   done
 }
 
@@ -78,7 +106,7 @@ do_uninstall_apex() {
   [ -z "$APEX_APPS" ] && return
   : > "$MODPATH/.apex_apps_removed"
   for pkg in $APEX_APPS; do
-    if pm uninstall -k --user 0 "$pkg" 2>/dev/null; then
+    if pm uninstall -k --user 0 "$pkg" >/dev/null 2>&1; then
       echo "$pkg" >> "$MODPATH/.apex_apps_removed"
     fi
   done
@@ -108,6 +136,8 @@ show_replace_list() {
     ui_print "  ⏳ 正在应用精简..."
     uninstall_replace_apps
     do_uninstall_apex
+    generate_apps_conf
+    record_replace_dirs
   else
     ui_print "  ❎ 已取消精简"
   fi
@@ -165,258 +195,78 @@ custom_mode() {
   ui_print "  🔊音量+ 精简此组 / 🔊音量- 进入选择"
   ui_print " ============================================"
 
-  # 分组1：AI/小爱
-  ui_print " "
-  ui_print " 📦 [1/7] AI/小爱"
-  ui_print "   包含：小爱推荐+超级小爱+语音唤醒+小爱视觉翻译+小爱服务+澎湃AI引擎"
-  ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
+  local groups=$(get_all_groups)
+  local total_groups=$(echo "$groups" | wc -l)
+  local group_idx=0
 
-  if getVolumeKey; then
-    # 音量+ = 精简整个分组
-    ui_print "   ❌ 精简此组"
-    add_to_replace \
-      "/system/product/app/XiaoaiRecommendation" \
-      "/system/product/app/VoiceAssistAndroidT" \
-      "/system/product/app/VoiceTrigger" \
-      "/system/product/app/AiasstVision" \
-      "/system/product/app/MIUIAiasstService" \
-      "/system/product/priv-app/MIUIAICR"
-  else
-    # 音量- = 进入逐个选择
-    custom_group "AI/小爱" \
-      "/system/product/app/XiaoaiRecommendation" "小爱推荐" \
-      "/system/product/app/VoiceAssistAndroidT" "超级小爱" \
-      "/system/product/app/VoiceTrigger" "语音唤醒" \
-      "/system/product/app/AiasstVision" "小爱视觉翻译" \
-      "/system/product/app/MIUIAiasstService" "小爱服务" \
-      "/system/product/priv-app/MIUIAICR" "澎湃AI引擎"
-  fi
+  for group_name in $groups; do
+    group_idx=$((group_idx + 1))
 
-  # 分组2：游戏中心
-  ui_print " "
-  ui_print " 📦 [2/7] 游戏中心"
-  ui_print "   包含：游戏服务SDK+小游戏服务+游戏中心+游戏高能时刻"
-  ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
+    # 跳过危险项（由 dangerous_items 处理）
+    [ "$group_name" = "危险项" ] && continue
 
-  if getVolumeKey; then
-    # 音量+ = 精简整个分组
-    ui_print "   ❌ 精简此组"
-    add_to_replace \
-      "/system/product/priv-app/MiGameCenterSDKService" \
-      "/system/product/priv-app/MiniGameService" \
-      "/system/product/data-app/MIUIGameCenter" \
-      "/system/product/app/MiGameService_8550"
-  else
-    # 音量- = 进入逐个选择
-    custom_group "游戏中心" \
-      "/system/product/priv-app/MiGameCenterSDKService" "游戏服务SDK" \
-      "/system/product/priv-app/MiniGameService" "小游戏服务" \
-      "/system/product/data-app/MIUIGameCenter" "游戏中心" \
-      "/system/product/app/MiGameService_8550" "游戏高能时刻"
-  fi
+    local group_apps=$(get_apps_by_group "$group_name")
 
-  # 分组3：设备互联/生态
-  ui_print " "
-  ui_print " 📦 [3/7] 设备互联/生态"
-  ui_print "   包含：云服务+云同步+云备份+妙享+汽车互联+互联互通+互联通信+数字钥匙+骑行"
-  ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
+    # 生成描述文字
+    local desc=""
+    for app_path in $group_apps; do
+      local dname=$(get_display_name "$app_path")
+      [ -n "$desc" ] && desc="${desc}+"
+      desc="${desc}${dname}"
+    done
 
-  if getVolumeKey; then
-    # 音量+ = 精简整个分组
-    ui_print "   ❌ 精简此组"
-    add_to_replace \
-      "/system/product/app/MIUICloudService" \
-      "/system/product/app/MIUIMiCloudSync" \
-      "/system/product/priv-app/MIUICloudBackup" \
-      "/system/product/priv-app/MirrorOS3" \
-      "/system/product/app/CarWith" \
-      "/system/product/app/MIS" \
-      "/system/product/app/MiLinkOS3Cn" \
-      "/system/product/app/LyraWOS3CN" \
-      "/system/product/app/MiConnectService" \
-      "/system_ext/app/digitalkey" \
-      "/product/app/RideModeAudio"
-  else
-    # 音量- = 进入逐个选择
-    custom_group "设备互联/生态" \
-      "/system/product/app/MIUICloudService" "小米云服务" \
-      "/system/product/app/MIUIMiCloudSync" "小米云同步" \
-      "/system/product/priv-app/MIUICloudBackup" "小米云备份" \
-      "/system/product/priv-app/MirrorOS3" "小米妙享" \
-      "/system/product/app/CarWith" "小米汽车互联" \
-      "/system/product/app/MIS" "小米汽车互联服务" \
-      "/system/product/app/MiLinkOS3Cn" "互联互通" \
-      "/system/product/app/LyraWOS3CN" "跨设备通信" \
-      "/system/product/app/MiConnectService" "互联通信服务" \
-      "/system_ext/app/digitalkey" "数字钥匙" \
-      "/product/app/RideModeAudio" "骑行模式"
-  fi
-
-  # 分组4：广告/追踪
-  ui_print " "
-  ui_print " 📦 [4/7] 广告/追踪"
-  ui_print "   包含：智能服务+安全追踪服务+广告隐私权+AnalyticsCore"
-  ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
-
-  if getVolumeKey; then
-    # 音量+ = 精简整个分组
-    ui_print "   ❌ 精简此组"
-    add_to_replace \
-      "/system/product/app/MSA" \
-      "/system/product/app/SecurityOnetrackService" \
-      "/system/product/app/AnalyticsCore"
-    add_apex_app "com.android.adservices.api"
-  else
-    # 音量- = 进入逐个选择
-    custom_group "广告/追踪" \
-      "/system/product/app/MSA" "智能服务" \
-      "/system/product/app/SecurityOnetrackService" "安全追踪服务" \
-      "/system/product/app/AnalyticsCore" "AnalyticsCore"
-    # apex 应用单独处理
     ui_print " "
-    ui_print "   [4/4] 广告隐私权（apex）"
-    ui_print "     🔊音量+ 精简 / 🔊音量- 保留"
+    ui_print " 📦 [${group_idx}/${total_groups}] ${group_name}"
+    ui_print "   包含：${desc}"
+    ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
+
     if getVolumeKey; then
-      add_apex_app "com.android.adservices.api"
-      ui_print "     ❌ 精简（apex）"
+      ui_print "   ❌ 精简此组"
+      for app_path in $group_apps; do
+        add_to_replace "$app_path"
+      done
+      # 广告/追踪分组额外添加 apex 应用
+      [ "$group_name" = "广告/追踪" ] && add_apex_app "com.android.adservices.api"
+      # 系统服务分组额外添加 apex 应用
+      [ "$group_name" = "系统服务" ] && add_apex_app "com.android.healthconnect.controller"
     else
-      ui_print "     ✅ 保留"
+      # 构建 custom_group 参数：路径1 名称1 路径2 名称2 ...
+      local group_args=""
+      for app_path in $group_apps; do
+        local dname=$(get_display_name "$app_path")
+        group_args="$group_args $app_path $dname"
+      done
+
+      # 系统服务使用快捷选择模式
+      if [ "$group_name" = "系统服务" ]; then
+        custom_group_with_shortcut "$group_name" $group_args
+        # apex 应用单独处理
+        ui_print " "
+        ui_print "   健康数据共享（apex）"
+        ui_print "     🔊音量+ 精简 / 🔊音量- 保留"
+        if getVolumeKey; then
+          add_apex_app "com.android.healthconnect.controller"
+          ui_print "     ❌ 精简（apex）"
+        else
+          ui_print "     ✅ 保留"
+        fi
+      elif [ "$group_name" = "广告/追踪" ]; then
+        custom_group "$group_name" $group_args
+        # apex 应用单独处理
+        ui_print " "
+        ui_print "   广告隐私权（apex）"
+        ui_print "     🔊音量+ 精简 / 🔊音量- 保留"
+        if getVolumeKey; then
+          add_apex_app "com.android.adservices.api"
+          ui_print "     ❌ 精简（apex）"
+        else
+          ui_print "     ✅ 保留"
+        fi
+      else
+        custom_group "$group_name" $group_args
+      fi
     fi
-  fi
-
-  # 分组5：内容/工具/安全
-  ui_print " "
-  ui_print " 📦 [5/7] 内容/工具/安全"
-  ui_print "   包含：智能助理+弹幕通知+内容扩展+画报+云盘+反馈+快应用+黄页+三方分析+扩展服务+悬浮球+家人守护"
-  ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
-
-  if getVolumeKey; then
-    # 音量+ = 精简整个分组
-    ui_print "   ❌ 精简此组"
-    add_to_replace \
-      "/system/product/priv-app/MIUIPersonalAssistantPhoneOS3" \
-      "/system/product/priv-app/MiuiBarrage" \
-      "/system/product/priv-app/MIUIContentExtension" \
-      "/product/app/MIGalleryLockscreen" \
-      "/product/app/MIUIMiDrive" \
-      "/product/app/MiBugReportOS3" \
-      "/product/app/hybrid" \
-      "/product/priv-app/MIUIYellowPage" \
-      "/product/app/ThirdAppAssistant" \
-      "/product/app/ContentCatcherOS3_1" \
-      "/product/app/MIUITouchAssistant" \
-      "/product/app/greenguard"
-  else
-    # 音量- = 进入逐个选择
-    custom_group "内容/工具/安全" \
-      "/system/product/priv-app/MIUIPersonalAssistantPhoneOS3" "智能助理" \
-      "/system/product/priv-app/MiuiBarrage" "弹幕通知" \
-      "/system/product/priv-app/MIUIContentExtension" "内容扩展" \
-      "/product/app/MIGalleryLockscreen" "小米画报" \
-      "/product/app/MIUIMiDrive" "小米云盘" \
-      "/product/app/MiBugReportOS3" "用户反馈" \
-      "/product/app/hybrid" "快应用服务" \
-      "/product/priv-app/MIUIYellowPage" "黄页" \
-      "/product/app/ThirdAppAssistant" "三方应用异常分析" \
-      "/product/app/ContentCatcherOS3_1" "应用扩展服务" \
-      "/product/app/MIUITouchAssistant" "悬浮球" \
-      "/product/app/greenguard" "家人守护"
-  fi
-
-  # 分组6：系统服务
-  ui_print " "
-  ui_print " 📦 [6/7] 系统服务"
-  ui_print "   包含：下载管理+扫一扫+打印+工作设置+窗口管理+报告+注册+系统服务+网络定位+健康数据+全局搜索"
-  ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
-
-  if getVolumeKey; then
-    # 音量+ = 精简整个分组
-    ui_print "   ❌ 精简此组"
-    add_to_replace \
-      "/system/product/data-app/DownloadProviderUi" \
-      "/system/product/data-app/MiuiScanner" \
-      "/system/priv-app/BuiltInPrintService" \
-      "/system/system_ext/app/MiuiPrintSpooler" \
-      "/system/priv-app/ManagedProvisioning" \
-      "/system/product/app/WMService" \
-      "/system/product/app/MIUIReporter" \
-      "/system/product/priv-app/AutoRegistration" \
-      "/system/product/priv-app/RegService" \
-      "/system/system_ext/app/MiSightService" \
-      "/system/system_ext/app/MiuiDaemon" \
-      "/system/system_ext/app/VsimCore" \
-      "/system/system_ext/priv-app/EmergencyInfo" \
-      "/system/system_ext/priv-app/PowerInsight" \
-      "/system/system_ext/priv-app/com.qualcomm.qti.services.systemhelper" \
-      "/system/priv-app/SystemHelper" \
-      "/system/product/priv-app/MetokNLP" \
-      "/system/product/priv-app/MIUIQuickSearchBox" \
-      "/system/app/Stk" \
-      "/system/app/CarrierDefaultApp" \
-      "/system/priv-app/CallLogBackup" \
-      "/product/priv-app/ConfigUpdater" \
-      "/product/app/CatchLog" \
-      "/system_ext/priv-app/TouchService"
-    add_apex_app "com.android.healthconnect.controller"
-  else
-    # 音量- = 进入逐个选择
-    custom_group_with_shortcut "系统服务" \
-      "/system/product/data-app/DownloadProviderUi" "下载管理" \
-      "/system/product/data-app/MiuiScanner" "扫一扫" \
-      "/system/priv-app/BuiltInPrintService" "系统打印服务" \
-      "/system/system_ext/app/MiuiPrintSpooler" "打印处理服务" \
-      "/system/priv-app/ManagedProvisioning" "工作设置" \
-      "/system/product/app/WMService" "窗口管理" \
-      "/system/product/app/MIUIReporter" "UI报告" \
-      "/system/product/priv-app/AutoRegistration" "注册服务" \
-      "/system/product/priv-app/RegService" "注册服务" \
-      "/system/system_ext/app/MiSightService" "质量监控" \
-      "/system/system_ext/app/MiuiDaemon" "系统守护" \
-      "/system/system_ext/app/VsimCore" "虚拟SIM" \
-      "/system/system_ext/priv-app/EmergencyInfo" "紧急信息" \
-      "/system/system_ext/priv-app/PowerInsight" "功耗分析" \
-      "/system/system_ext/priv-app/com.qualcomm.qti.services.systemhelper" "系统助手" \
-      "/system/priv-app/SystemHelper" "SystemHelper" \
-      "/system/product/priv-app/MetokNLP" "网络位置服务" \
-      "/system/product/priv-app/MIUIQuickSearchBox" "全局搜索" \
-      "/system/app/Stk" "SIM卡应用" \
-      "/system/app/CarrierDefaultApp" "运营商通知" \
-      "/system/priv-app/CallLogBackup" "通话记录备份" \
-      "/product/priv-app/ConfigUpdater" "谷歌后台更新" \
-      "/product/app/CatchLog" "日志抓取" \
-      "/system_ext/priv-app/TouchService" "触摸轨迹服务"
-    # apex 应用单独处理
-    ui_print " "
-    ui_print "   [25/25] 健康数据共享（apex）"
-    ui_print "     🔊音量+ 精简 / 🔊音量- 保留"
-    if getVolumeKey; then
-      add_apex_app "com.android.healthconnect.controller"
-      ui_print "     ❌ 精简（apex）"
-    else
-      ui_print "     ✅ 保留"
-    fi
-  fi
-
-  # 分组7：无障碍/宏
-  ui_print " "
-  ui_print " 📦 [7/7] 无障碍/宏"
-  ui_print "   包含：无障碍开关+宏+GPU驱动更新"
-  ui_print "   🔊音量+ 精简此组 / 🔊音量- 进入选择"
-
-  if getVolumeKey; then
-    # 音量+ = 精简整个分组
-    ui_print "   ❌ 精简此组"
-    add_to_replace \
-      "/system/product/app/SwitchAccess" \
-      "/system/product/app/com.xiaomi.macro" \
-      "/system/product/app/com.xiaomi.ugd"
-  else
-    # 音量- = 进入逐个选择
-    custom_group "无障碍/宏" \
-      "/system/product/app/SwitchAccess" "无障碍开关" \
-      "/system/product/app/com.xiaomi.macro" "宏" \
-      "/system/product/app/com.xiaomi.ugd" "GPU驱动更新"
-  fi
+  done
 }
 
 # 自定义模式：逐个应用选择（兼容 sh，支持重选本组）
@@ -478,7 +328,7 @@ custom_group() {
     if ! getVolumeKey; then
       # 重选：从 REPLACE 中移除本组已选
       for p in $group_selected; do
-        REPLACE=$(echo "$REPLACE" | grep -v "$p")
+        REPLACE=$(echo "$REPLACE" | grep -vxF "$p")
       done
       retry=true
     fi
@@ -642,6 +492,47 @@ dangerous_items() {
 on_install() {
   restore_data_apps
 
+  # 检测是否为覆盖安装
+  local old_conf="/data/adb/modules/$MODID/webroot/apps.conf"
+  if [ -f "$old_conf" ]; then
+    ui_print " "
+    ui_print " ============================================"
+    ui_print "  🔍 检测到已有配置"
+    ui_print "  🔊音量+ 应用旧配置 / 🔊音量- 重新选择"
+    ui_print " ============================================"
+    if getVolumeKey; then
+      ui_print "  ✅ 应用旧配置"
+      # 从旧配置中读取状态为1的应用
+      while IFS='|' read -r path name pkg status group; do
+        [ -z "$path" ] && continue
+        case "$path" in \#*) continue ;; esac
+        if [ "$status" = "1" ]; then
+          add_to_replace "$path"
+        fi
+      done < "$old_conf"
+      # 生成新配置（data 副本已在上次安装时卸载，REPLACE 会遮蔽系统版本）
+      generate_apps_conf
+      record_replace_dirs
+      return
+    else
+      ui_print "  🔄 重新选择"
+    fi
+  fi
+
+  ui_print " "
+  ui_print " ============================================"
+  ui_print "  🔊音量+ 立即选择精简模式"
+  ui_print "  🔊音量- 跳过，稍后通过 WebUI 配置"
+  ui_print " ============================================"
+
+  if ! getVolumeKey; then
+    # 跳过：生成空配置，全部保留
+    ui_print "  ⏭️ 已跳过，重启后通过 WebUI 配置"
+    generate_apps_conf
+    record_replace_dirs
+    return
+  fi
+
   ui_print " "
   ui_print " ============================================"
   ui_print "  📖 操作说明："
@@ -770,9 +661,6 @@ on_install() {
         "/system/product/app/SwitchAccess" \
         "/system/product/app/com.xiaomi.macro" \
         "/system/product/app/com.xiaomi.ugd"
-        "/product/priv-app/ConfigUpdater" \
-        "/product/app/CatchLog" \
-        "/system_ext/priv-app/TouchService"
       add_apex_app "com.android.adservices.api" "com.android.healthconnect.controller"
       ;;
     4)
@@ -793,7 +681,7 @@ restore_data_apps() {
   local old_record="/data/adb/modules/$MODID/.data_apps_removed"
   if [ -f "$old_record" ]; then
     while IFS= read -r pkg; do
-      [ -n "$pkg" ] && pm install-existing --user 0 "$pkg" 2>/dev/null
+      [ -n "$pkg" ] && pm install-existing --user 0 "$pkg" >/dev/null 2>&1
     done < "$old_record"
   fi
 
@@ -801,7 +689,7 @@ restore_data_apps() {
   local apex_record="/data/adb/modules/$MODID/.apex_apps_removed"
   if [ -f "$apex_record" ]; then
     while IFS= read -r pkg; do
-      [ -n "$pkg" ] && pm install-existing --user 0 "$pkg" 2>/dev/null
+      [ -n "$pkg" ] && pm install-existing --user 0 "$pkg" >/dev/null 2>&1
     done < "$apex_record"
   fi
 }
