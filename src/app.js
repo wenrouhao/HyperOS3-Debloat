@@ -632,7 +632,8 @@ async function confirmAddApps() {
   const appNames = addSelectedApps.map(a => a.name).join('、');
   const confirmed = await showConfirmDialog("customOverlay", {
     appName: appNames,
-    appPkg: '共 ' + addSelectedApps.length + ' 个应用'
+    appPkg: '共 ' + addSelectedApps.length + ' 个应用',
+    confirmText: "确认添加"
   });
 
   if (!confirmed) return;
