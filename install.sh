@@ -76,9 +76,13 @@ uninstall_replace_apps() {
 # 生成 apps.conf 配置文件（供 WebUI 和 post-fs-data.sh 使用）
 generate_apps_conf() {
   local conf="$MODPATH/webroot/apps.conf"
+  local old_conf="/data/adb/modules/$MODID/webroot/apps.conf"
   mkdir -p "$MODPATH/webroot"
   echo "# HyperOS3 Debloat 配置" > "$conf"
   echo "# 格式：路径|显示名|包名|状态（1=精简 0=保留）|分组" >> "$conf"
+
+  # 记录 apps.db 中的路径
+  local db_paths=""
   local line
   while IFS= read -r line; do
     case "$line" in \#*|"") continue ;; esac
@@ -86,6 +90,8 @@ generate_apps_conf() {
     local display=$(echo "$line" | cut -d'|' -f2)
     local pkg=$(echo "$line" | cut -d'|' -f3)
     local group=$(echo "$line" | cut -d'|' -f4)
+    db_paths="$db_paths
+$path"
     local status=0
     echo "$REPLACE" | grep -qxF "$path" && status=1
     # APEX 应用检查
@@ -95,6 +101,17 @@ generate_apps_conf() {
     ;; esac
     echo "$path|$display|$pkg|$status|$group" >> "$conf"
   done < "$APPS_DB"
+
+  # 保留旧 apps.conf 中的自定义应用（不在 apps.db 中的）
+  if [ -f "$old_conf" ]; then
+    while IFS='|' read -r _p _n _pkg _st _g; do
+      [ -z "$_p" ] && continue; case "$_p" in \#*) continue ;; esac
+      case "$db_paths" in
+        *"$_p"*) continue ;;
+      esac
+      echo "$_p|$_n|$_pkg|$_st|$_g" >> "$conf"
+    done < "$old_conf"
+  fi
 }
 
 # 记录 REPLACE 目录（供 post-fs-data.sh 清理）
