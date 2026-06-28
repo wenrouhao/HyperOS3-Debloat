@@ -156,12 +156,14 @@ function showDangerConfirm(app) {
   });
 }
 
+let searchTimer = null;
 function initSearch() {
   const input = document.getElementById("searchInput");
   if (!input) return;
   input.addEventListener("input", (e) => {
     searchQuery = e.target.value.trim().toLowerCase();
-    render();
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => render(), 300);
   });
 }
 
@@ -735,9 +737,11 @@ document.getElementById('addCancel').addEventListener('click', () => {
   document.getElementById('addOverlay').classList.remove('show');
 });
 document.getElementById('addConfirm').addEventListener('click', confirmAddApps);
+let addSearchTimer = null;
 document.getElementById('addSearch').addEventListener('input', (e) => {
   addSearchQuery = e.target.value.trim().toLowerCase();
-  renderAddList();
+  if (addSearchTimer) clearTimeout(addSearchTimer);
+  addSearchTimer = setTimeout(() => renderAddList(), 300);
 });
 
 // Settings
