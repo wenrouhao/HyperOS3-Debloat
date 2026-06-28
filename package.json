@@ -1,0 +1,15 @@
+{
+  "name": "hyperos3-debloat",
+  "version": "4.0.0",
+  "description": "HyperOS3 专用精简模块",
+  "scripts": {
+    "build": "rm -rf webroot && parcel build src/index.html --dist-dir webroot --no-source-maps --no-cache --public-url ./",
+    "dev": "parcel src/index.html"
+  },
+  "dependencies": {
+    "kernelsu": "^1.0.0"
+  },
+  "devDependencies": {
+    "parcel": "^2.12.0"
+  }
+}

@@ -436,7 +436,7 @@ dangerous_items() {
   fi
 
   ui_print " "
-  ui_print "  ⌨️ 搜狗输入法 - 请确保有其他输入法"
+  ui_print "  ⌨️ 搜狗输入法小米版 - 请确保有其他输入法"
   ui_print "  🔊音量+ 精简 / 🔊音量- 保留"
   if getVolumeKey; then
     add_to_replace "/system/product/app/SogouIME"
@@ -446,7 +446,7 @@ dangerous_items() {
   fi
 
   ui_print " "
-  ui_print "  ⌨️ 讯飞输入法小米版 - 请确保有其他输入法"
+  ui_print "  ⌨️ 讯飞输入法 - 请确保有其他输入法"
   ui_print "  🔊音量+ 精简 / 🔊音量- 保留"
   if getVolumeKey; then
     add_to_replace "/data/app/iFlytekIME"
@@ -456,7 +456,7 @@ dangerous_items() {
   fi
 
   ui_print " "
-  ui_print "  📡 Cell Broadcast Service - 紧急警报服务"
+  ui_print "  📡 Cell Broadcast Service(紧急警报) - 紧急警报服务"
   ui_print "  ⚠️ 精简后收不到地震/灾害预警"
   ui_print "  🔊音量+ 精简 / 🔊音量- 保留"
   if getVolumeKey; then
@@ -488,7 +488,7 @@ dangerous_items() {
   fi
 
   ui_print " "
-  ui_print "  🛒 小米应用商店 - 应用下载"
+  ui_print "  🛒 应用商店 - 应用下载"
   ui_print "  🔊音量+ 精简 / 🔊音量- 保留"
   if getVolumeKey; then
     add_to_replace "/system/product/app/MIUISuperMarket_M2_M3"

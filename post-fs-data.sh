@@ -29,18 +29,38 @@ $_p=$_st"
   TMP_CONF="$MODPATH/webroot/apps.conf.tmp"
   echo "# HyperOS3 Debloat 配置" > "$TMP_CONF"
   echo "# 格式：路径|显示名|包名|状态（1=精简 0=保留）|分组" >> "$TMP_CONF"
+
+  # 记录 apps.db 中的路径
+  DB_PATHS=""
+
   while IFS= read -r line; do
+    line="${line%$(printf '\r')}"
     case "$line" in \#*|"") continue ;; esac
     path=$(echo "$line" | cut -d'|' -f1)
     display=$(echo "$line" | cut -d'|' -f2)
     pkg=$(echo "$line" | cut -d'|' -f3)
     group=$(echo "$line" | cut -d'|' -f4)
+    DB_PATHS="$DB_PATHS
+$path"
     # 查找旧状态，默认 0（保留）
     status=0
     old=$(echo "$OLD_STATUS" | grep "^$path=" | tail -1)
     [ -n "$old" ] && status="${old#*=}"
     echo "$path|$display|$pkg|$status|$group" >> "$TMP_CONF"
   done < "$APPS_DB"
+
+  # 保留旧 apps.conf 中的自定义应用（不在 apps.db 中的）
+  if [ -f "$APPS_CONF" ]; then
+    while IFS='|' read -r _p _n _pkg _st _g; do
+      _p="${_p%$(printf '\r')}"
+      [ -z "$_p" ] && continue; case "$_p" in \#*) continue ;; esac
+      case "$DB_PATHS" in
+        *"$_p"*) continue ;;
+      esac
+      echo "$_p|$_n|$_pkg|$_st|$_g" >> "$TMP_CONF"
+    done < "$APPS_CONF"
+  fi
+
   mv "$TMP_CONF" "$APPS_CONF"
 fi
 
@@ -60,8 +80,8 @@ while IFS='|' read -r path name pkg status group; do
   [ -z "$path" ] && continue
   case "$path" in \#*) continue ;; esac
 
-  # APEX 应用：用 pm uninstall 处理
-  case "$path" in apex:*)
+  # APEX/pm: 前缀的应用：用 pm uninstall 处理
+  case "$path" in apex:*|pm:*)
     if [ "$status" = "1" ] && [ -n "$pkg" ]; then
       pm uninstall -k --user 0 "$pkg" >/dev/null 2>&1
     else

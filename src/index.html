@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperOS3 精简管理</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <svg class="header-icon" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+                <div>
+                    <h1>精简管理</h1>
+                    <div class="header-sub">HyperOS3 Debloat</div>
+                    <div class="header-version" id="headerVersion">KernelSU Module</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btnSettings" aria-label="设置">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                <button id="btnTheme" aria-label="切换主题"></button>
+            </div>
+        </div>
+        <div class="search-bar">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="searchInput" placeholder="搜索应用名或包名…" autocomplete="off">
+        </div>
+        <div class="stats" id="stats" aria-live="polite">正在加载…</div>
+        <div class="tips">
+            <div class="tips-title">💡 使用说明</div>
+            <div class="tips-item"><span class="tips-dot"></span><span>开启 = 精简该应用，关闭 = 保留该应用</span></div>
+            <div class="tips-item"><span class="tips-dot"></span><span>危险项开启时会弹出警告，请谨慎操作</span></div>
+            <div class="tips-item"><span class="tips-dot"></span><span>修改后需点击"保存"或"保存并重启"才能生效</span></div>
+            <div class="tips-item"><span class="tips-dot"></span><span>点击右上角 ⚙️ 可开启"自定义精简应用"功能</span></div>
+        </div>
+        <div id="apps" role="list"></div>
+    </div>
+    <div class="bottom-bar">
+        <div class="bottom-bar-row" id="addAppRow" style="display:none">
+            <button class="btn btn-add" id="btnAdd" aria-label="增加应用">
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                增加应用
+            </button>
+        </div>
+        <div class="bottom-bar-row">
+            <button class="btn btn-save" id="btnSave" aria-label="保存配置">
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                保存
+            </button>
+            <button class="btn btn-reboot" id="btnReboot" aria-label="保存并重启">
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                保存并重启
+            </button>
+        </div>
+    </div>
+    <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+    <!-- 设置弹窗 -->
+    <div class="dialog-overlay" id="settingsOverlay">
+        <div class="dialog dialog-settings" role="dialog" aria-modal="true">
+            <div class="dialog-header">
+                <div class="dialog-title">⚙️ 设置</div>
+                <button class="dialog-close" id="settingsClose" aria-label="关闭">✕</button>
+            </div>
+            <div class="settings-content">
+                <div class="settings-section">
+                    <div class="settings-section-title">功能设置</div>
+                    <div class="settings-card">
+                        <div class="settings-item">
+                            <div class="settings-info">
+                                <div class="settings-name">自定义精简应用</div>
+                                <div class="settings-desc">开启后可添加系统应用进行精简，此为高级功能，操作不当可能影响系统稳定性</div>
+                            </div>
+                            <div class="toggle-wrap" id="toggleAddApp" role="switch" aria-checked="false" tabindex="0">
+                                <div class="toggle"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-section-title">开发者选项</div>
+                    <div class="settings-card">
+                        <div class="settings-item">
+                            <div class="settings-info">
+                                <div class="settings-name">调试日志</div>
+                                <div class="settings-desc">记录操作日志，用于排查问题。日志保存在模块目录的 debug.log 文件中</div>
+                            </div>
+                            <div class="toggle-wrap" id="toggleLog" role="switch" aria-checked="false" tabindex="0">
+                                <div class="toggle"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重启确认弹窗 -->
+    <div class="dialog-overlay" id="dialogOverlay">
+        <div class="dialog" role="dialog" aria-modal="true">
+            <div class="dialog-title">确认重启</div>
+            <div class="dialog-msg">保存配置后需要重启才能生效，确定现在重启吗？</div>
+            <div class="dialog-actions">
+                <button class="dialog-btn dialog-cancel" id="dialogCancel">取消</button>
+                <button class="dialog-btn dialog-confirm" id="dialogConfirm">重启</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 危险项确认弹窗 -->
+    <div class="dialog-overlay" id="dangerOverlay">
+        <div class="dialog" role="dialog" aria-modal="true">
+            <div class="dialog-title" style="color:var(--danger)">⚠️ 危险项确认</div>
+            <div class="dialog-msg">
+                <div style="font-weight:600;margin-bottom:8px" id="dangerAppName"></div>
+                <div id="dangerDesc" style="color:var(--text2)"></div>
+            </div>
+            <div class="dialog-actions">
+                <button class="dialog-btn dialog-cancel" id="dangerCancel">取消</button>
+                <button class="dialog-btn dialog-confirm-danger" id="dangerConfirm">确认精简</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 增加应用弹窗 -->
+    <div class="dialog-overlay" id="addOverlay">
+        <div class="dialog dialog-fullscreen" role="dialog" aria-modal="true">
+            <div class="dialog-header">
+                <div class="dialog-title">➕ 增加应用</div>
+                <button class="dialog-close" id="addClose" aria-label="关闭">✕</button>
+            </div>
+            <div class="dialog-search">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="addSearch" placeholder="搜索应用名或包名…" autocomplete="off">
+            </div>
+            <div class="dialog-stats" id="addStats">正在加载…</div>
+            <div class="dialog-list" id="addList"></div>
+            <div class="dialog-footer">
+                <div class="dialog-selected">已选 <span id="addCount">0</span> 个</div>
+                <div class="dialog-actions">
+                    <button class="dialog-btn dialog-cancel" id="addCancel">取消</button>
+                    <button class="dialog-btn dialog-confirm" id="addConfirm" disabled>添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义应用精简确认弹窗 -->
+    <div class="dialog-overlay" id="customOverlay">
+        <div class="dialog" role="dialog" aria-modal="true">
+            <div class="dialog-title" style="color:var(--danger)">⚠️ 确认精简</div>
+            <div class="dialog-msg">
+                <div style="font-weight:600;margin-bottom:8px" id="customAppName"></div>
+                <div style="font-size:0.75em;color:var(--text3);margin-bottom:8px" id="customAppPkg"></div>
+                <div style="color:var(--text2)">此应用不在预设列表中，精简后可能影响系统功能，建议谨慎操作。</div>
+            </div>
+            <div class="dialog-actions">
+                <button class="dialog-btn dialog-cancel" id="customCancel">取消</button>
+                <button class="dialog-btn dialog-confirm-danger" id="customConfirm">确认精简</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除自定义应用确认弹窗 -->
+    <div class="dialog-overlay" id="deleteOverlay">
+        <div class="dialog" role="dialog" aria-modal="true">
+            <div class="dialog-title">移除应用</div>
+            <div class="dialog-msg">确定从列表移除 <span id="deleteAppName" style="font-weight:600"></span>？</div>
+            <div class="dialog-actions">
+                <button class="dialog-btn dialog-cancel" id="deleteCancel">取消</button>
+                <button class="dialog-btn dialog-confirm" id="deleteConfirm">移除</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+</html>

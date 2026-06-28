@@ -1,860 +1,173 @@
-<!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperOS3 精简管理</title>
-    <style>
-        /* ===== 科技风主题变量 ===== */
-        :root, [data-theme="light"] {
-            --bg: #f0f2f5;
-            --surface: #fff;
-            --surface2: #f5f5f7;
-            --text: #111827;
-            --text2: #4b5563;
-            --text3: #9ca3af;
-            --border: rgba(0,0,0,0.06);
-            --glow: transparent;
-            --glow-border: rgba(0,0,0,0.08);
-            --search-bg: #e5e7eb;
-            --toggle-off: #d1d5db;
-            --header-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-            --header-glow: rgba(0,212,255,0.1);
-            --card-hover: rgba(0,212,255,0.03);
-            --accent: #00d4ff;
-            --accent-dim: rgba(0,212,255,0.1);
-            --danger: #ff3b3b;
-            --danger-dim: rgba(255,59,59,0.1);
-            --tips-bg: linear-gradient(135deg, rgba(0,212,255,0.05) 0%, rgba(99,102,241,0.05) 100%);
-        }
-        [data-theme="dark"] {
-            --bg: #0a0a0f;
-            --surface: #12121a;
-            --surface2: #1a1a25;
-            --text: #e8e8ed;
-            --text2: #a0a0b0;
-            --text3: #5a5a6e;
-            --border: rgba(255,255,255,0.06);
-            --glow: rgba(0,212,255,0.08);
-            --glow-border: rgba(0,212,255,0.15);
-            --search-bg: #1a1a25;
-            --toggle-off: #2a2a3a;
-            --header-bg: linear-gradient(135deg, #0a0a1a 0%, #0f1525 50%, #0a0a1a 100%);
-            --header-glow: rgba(0,212,255,0.15);
-            --card-hover: rgba(0,212,255,0.05);
-            --accent: #00d4ff;
-            --accent-dim: rgba(0,212,255,0.1);
-            --danger: #ff3b3b;
-            --danger-dim: rgba(255,59,59,0.12);
-            --tips-bg: linear-gradient(135deg, rgba(0,212,255,0.06) 0%, rgba(99,102,241,0.06) 100%);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, 'MiSans', BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100dvh;
-            display: flex;
-            justify-content: center;
-            -webkit-tap-highlight-color: transparent;
-            transition: background 0.3s, color 0.3s;
-        }
-        .container { width: 100%; max-width: 600px; padding: 0 16px 100px; }
-
-        /* ===== 科技风 Header ===== */
-        .header {
-            background: var(--header-bg);
-            margin: 0 -16px;
-            padding: 28px 20px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
-            overflow: hidden;
-            border-bottom: 1px solid var(--glow-border);
-        }
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -20%;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, var(--header-glow) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent), transparent);
-            opacity: 0.5;
-        }
-        .header-left { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
-        .header-icon {
-            width: 32px; height: 32px;
-            fill: var(--accent);
-            filter: drop-shadow(0 0 6px rgba(0,212,255,0.4));
-        }
-        .header h1 {
-            font-size: 1.4em;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: -0.02em;
-        }
-        .header-sub {
-            font-size: 0.72em;
-            color: var(--accent);
-            margin-top: 2px;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-        .header-version {
-            font-size: 0.6em;
-            color: var(--text3);
-            margin-top: 2px;
-            font-family: 'SF Mono', 'Fira Code', monospace;
-        }
-        #btnTheme {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: #fff;
-            position: relative;
-            z-index: 1;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        #btnTheme:active { background: rgba(255,255,255,0.15); }
-
-        /* ===== 搜索栏 ===== */
-        .search-bar { margin: 16px 0 12px; position: relative; }
-        .search-bar svg {
-            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-            width: 18px; height: 18px; fill: none; stroke: var(--text3); stroke-width: 2;
-            pointer-events: none;
-        }
-        #searchInput {
-            width: 100%;
-            padding: 12px 16px 12px 42px;
-            border: 1px solid var(--glow-border);
-            border-radius: 12px;
-            background: var(--search-bg);
-            color: var(--text);
-            font-size: 0.9em;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            -webkit-appearance: none;
-        }
-        #searchInput::placeholder { color: var(--text3); }
-        #searchInput:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(0,212,255,0.15), 0 0 12px rgba(0,212,255,0.1);
-        }
-
-        /* ===== Stats ===== */
-        .stats {
-            font-size: 0.82em;
-            color: var(--text2);
-            margin-bottom: 12px;
-            line-height: 1.5;
-            padding: 10px 14px;
-            background: var(--surface);
-            border-radius: 10px;
-            border: 1px solid var(--glow-border);
-            transition: all 0.3s;
-        }
-        .stats b { color: var(--accent); font-weight: 700; }
-
-        /* ===== Tips ===== */
-        .tips {
-            background: var(--tips-bg);
-            border: 1px solid var(--glow-border);
-            border-radius: 10px;
-            padding: 10px 14px;
-            margin-bottom: 16px;
-            font-size: 0.75em;
-            color: var(--text2);
-            line-height: 1.6;
-        }
-        .tips-title { font-weight: 600; color: var(--accent); margin-bottom: 4px; }
-        .tips-item { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
-        .tips-dot {
-            width: 4px; height: 4px; border-radius: 50%;
-            background: var(--accent); flex-shrink: 0;
-        }
-
-        /* ===== Group ===== */
-        .group {
-            background: var(--surface);
-            border-radius: 14px;
-            margin-bottom: 10px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .group:hover { border-color: var(--glow-border); box-shadow: 0 0 12px var(--glow); }
-        .danger-group { border-color: rgba(255,59,59,0.2); }
-        .danger-group:hover { border-color: rgba(255,59,59,0.3); box-shadow: 0 0 12px rgba(255,59,59,0.1); }
-        .group-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 14px;
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-            transition: background 0.15s;
-            min-height: 52px;
-            background: var(--surface2);
-            border-bottom: 1px solid var(--border);
-        }
-        .group-header:active { background: var(--card-hover); }
-        .group-left { display: flex; align-items: center; gap: 10px; }
-        .group-accent {
-            width: 5px; height: 22px; border-radius: 3px; flex-shrink: 0;
-        }
-        .group-name { font-size: 1em; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-        .danger-tag { color: var(--danger); font-size: 0.85em; }
-        .group-badge {
-            font-size: 0.68em;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-        .group-arrow {
-            width: 16px; height: 16px;
-            stroke: var(--text3); fill: none; stroke-width: 2;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            flex-shrink: 0;
-        }
-        .group.open .group-arrow { transform: rotate(90deg); }
-        .group-body {
-            overflow: hidden;
-            max-height: 0;
-            opacity: 0;
-            transition: max-height 0.25s ease-out, opacity 0.2s ease;
-        }
-        .group-body-inner { padding: 0 8px; }
-        .group.open .group-body-inner { padding-bottom: 8px; }
-
-        /* ===== App Item ===== */
-        .app-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 11px 8px; min-height: 48px;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.15s; border-radius: 8px;
-        }
-        .app-item:last-child { border-bottom: none; }
-        .app-item:active { background: var(--surface2); }
-        .app-item.danger-active { background: var(--danger-dim); }
-        .app-info { display: flex; flex-direction: column; flex: 1; min-width: 0; margin-right: 12px; }
-        .app-name { font-size: 0.88em; font-weight: 500; color: var(--text); line-height: 1.4; }
-        .danger-dot {
-            display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-            background: var(--danger); margin-left: 4px; vertical-align: middle;
-        }
-        .app-pkg {
-            font-size: 0.62em; color: var(--text3); margin-top: 2px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            line-height: 1.4; font-family: 'SF Mono', 'Fira Code', monospace;
-        }
-
-        /* ===== Toggle ===== */
-        .toggle-wrap {
-            position: relative; width: 48px; height: 48px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
-        }
-        .toggle {
-            position: relative; width: 44px; height: 24px;
-            background: var(--toggle-off); border-radius: 12px;
-            transition: background 0.2s, box-shadow 0.2s; pointer-events: none;
-        }
-        .toggle-wrap.on .toggle {
-            background: var(--danger);
-            box-shadow: 0 0 10px rgba(255,59,59,0.3);
-        }
-        .toggle::after {
-            content: ''; position: absolute; top: 2px; left: 2px;
-            width: 20px; height: 20px; background: #fff; border-radius: 50%;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .toggle-wrap.on .toggle::after { transform: translateX(20px); }
-        .toggle-wrap:focus-visible .toggle {
-            outline: 2px solid var(--accent); outline-offset: 2px;
-        }
-
-        /* ===== Bottom Bar ===== */
-        .bottom-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: var(--surface);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            padding: 10px 16px;
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
-            box-shadow: 0 -2px 16px rgba(0,0,0,0.2);
-            display: flex; gap: 10px; justify-content: center;
-            border-top: 1px solid var(--glow-border);
-            transition: all 0.3s;
-        }
-        .btn {
-            flex: 1; max-width: 280px; padding: 12px 16px; border: none;
-            border-radius: 12px; font-size: 0.88em; font-weight: 600;
-            cursor: pointer; touch-action: manipulation;
-            transition: all 0.2s; display: flex; align-items: center;
-            justify-content: center; gap: 6px; min-height: 48px;
-        }
-        .btn:active { transform: scale(0.97); }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-        .btn-save {
-            background: linear-gradient(135deg, var(--danger) 0%, #cc2e2e 100%);
-            color: #fff; box-shadow: 0 2px 10px rgba(255,59,59,0.25);
-        }
-        .btn-reboot {
-            background: linear-gradient(135deg, #2a2a3a 0%, #1a1a25 100%);
-            color: #fff; border: 1px solid var(--glow-border);
-        }
-        .btn-icon { width: 18px; height: 18px; fill: currentColor; }
-
-        /* ===== Toast ===== */
-        .toast {
-            position: fixed; bottom: 80px; left: 50%;
-            transform: translateX(-50%) translateY(10px);
-            background: var(--surface); color: var(--text);
-            padding: 10px 20px; border-radius: 20px;
-            font-size: 0.85em; font-weight: 500; opacity: 0;
-            transition: opacity 0.25s, transform 0.25s;
-            pointer-events: none; z-index: 100;
-            border: 1px solid var(--glow-border);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* ===== Dialog ===== */
-        .dialog-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(6px); display: flex;
-            align-items: center; justify-content: center;
-            z-index: 200; opacity: 0; pointer-events: none;
-            transition: opacity 0.2s;
-        }
-        .dialog-overlay.show { opacity: 1; pointer-events: auto; }
-        .dialog {
-            background: var(--surface); border-radius: 18px;
-            padding: 24px; width: 88%; max-width: 300px; text-align: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            border: 1px solid var(--glow-border);
-            transform: scale(0.92) translateY(10px);
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .dialog-overlay.show .dialog { transform: scale(1) translateY(0); }
-        .dialog-title { font-size: 1.1em; font-weight: 700; margin-bottom: 8px; }
-        .dialog-msg { font-size: 0.85em; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
-        .dialog-actions { display: flex; gap: 10px; }
-        .dialog-btn {
-            flex: 1; padding: 12px; border: none; border-radius: 12px;
-            font-size: 0.88em; font-weight: 600; cursor: pointer;
-            min-height: 44px; transition: all 0.2s;
-        }
-        .dialog-btn:active { transform: scale(0.97); }
-        .dialog-cancel { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-        .dialog-confirm { background: linear-gradient(135deg, var(--danger), #cc2e2e); color: #fff; }
-        .dialog-confirm-danger { background: linear-gradient(135deg, #ff6b35, #ff3b3b); color: #fff; }
-
-        /* ===== Empty State ===== */
-        .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
-        .empty-icon { font-size: 2em; margin-bottom: 8px; }
-        .empty-text { font-size: 0.9em; }
-
-        /* ===== Animation ===== */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes glowPulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-        .group { animation: fadeInUp 0.3s ease both; }
-        .group:nth-child(2) { animation-delay: 0.04s; }
-        .group:nth-child(3) { animation-delay: 0.08s; }
-        .group:nth-child(4) { animation-delay: 0.12s; }
-        .group:nth-child(5) { animation-delay: 0.16s; }
-        .group:nth-child(6) { animation-delay: 0.2s; }
-        .group:nth-child(7) { animation-delay: 0.24s; }
-        .group:nth-child(8) { animation-delay: 0.28s; }
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <svg class="header-icon" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+<!DOCTYPE html><html lang=zh-CN data-theme=dark><meta charset=UTF-8><meta name=viewport content="width=device-width, initial-scale=1.0"><title>HyperOS3 精简管理</title><link rel=stylesheet href=HyperOS3-Debloat.c9779eb2.css><body>
+    <div class=container>
+        <div class=header>
+            <div class=header-left>
+                <svg class=header-icon viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2m0 12H4V8h16Z"/></svg>
                 <div>
                     <h1>精简管理</h1>
-                    <div class="header-sub">HyperOS3 Debloat</div>
-                    <div class="header-version" id="headerVersion">KernelSU Module</div>
+                    <div class=header-sub>HyperOS3 Debloat</div>
+                    <div class=header-version id=headerVersion>KernelSU Module</div>
                 </div>
             </div>
-            <button id="btnTheme" aria-label="切换主题"></button>
+            <div class=header-actions>
+                <button id=btnSettings aria-label=设置>
+                    <svg width=20 height=20 fill=none stroke=currentColor stroke-width=2 viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"/><circle cx=12 cy=12 r=3 /></svg>
+                </button>
+                <button id=btnTheme aria-label=切换主题></button>
+            </div>
         </div>
-        <div class="search-bar">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="searchInput" placeholder="搜索应用名或包名…" autocomplete="off">
+        <div class=search-bar>
+            <svg viewBox="0 0 24 24"><circle cx=11 cy=11 r=8 /><path d="m21 21-4.35-4.35"/></svg>
+            <input id=searchInput placeholder=搜索应用名或包名… autocomplete=off>
         </div>
-        <div class="stats" id="stats" aria-live="polite">正在加载…</div>
-        <div class="tips">
-            <div class="tips-title">💡 使用说明</div>
-            <div class="tips-item"><span class="tips-dot"></span><span>开启 = 精简该应用，关闭 = 保留该应用</span></div>
-            <div class="tips-item"><span class="tips-dot"></span><span>危险项开启时会弹出警告，请谨慎操作</span></div>
-            <div class="tips-item"><span class="tips-dot"></span><span>修改后需点击"保存并重启"才能生效</span></div>
+        <div class=stats id=stats aria-live=polite>正在加载…</div>
+        <div class=tips>
+            <div class=tips-title>💡 使用说明</div>
+            <div class=tips-item><span class=tips-dot></span><span>开启 = 精简该应用，关闭 = 保留该应用</span></div>
+            <div class=tips-item><span class=tips-dot></span><span>危险项开启时会弹出警告，请谨慎操作</span></div>
+            <div class=tips-item><span class=tips-dot></span><span>修改后需点击"保存"或"保存并重启"才能生效</span></div>
+            <div class=tips-item><span class=tips-dot></span><span>点击右上角 ⚙️ 可开启"自定义精简应用"功能</span></div>
         </div>
-        <div id="apps" role="list"></div>
+        <div id=apps role=list></div>
     </div>
-    <div class="bottom-bar">
-        <button class="btn btn-save" id="btnSave" aria-label="保存配置">
-            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-            保存
-        </button>
-        <button class="btn btn-reboot" id="btnReboot" aria-label="保存并重启">
-            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-            保存并重启
-        </button>
+    <div class=bottom-bar>
+        <div class=bottom-bar-row id=addAppRow style=display:none>
+            <button class="btn btn-add" id=btnAdd aria-label=增加应用>
+                <svg class=btn-icon viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m5 11h-4v4h-2v-4H7v-2h4V7h2v4h4Z"/></svg>
+                增加应用
+            </button>
+        </div>
+        <div class=bottom-bar-row>
+            <button class="btn btn-save" id=btnSave aria-label=保存配置>
+                <svg class=btn-icon viewBox="0 0 24 24"><path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7Zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3m3-10H5V5h10Z"/></svg>
+                保存
+            </button>
+            <button class="btn btn-reboot" id=btnReboot aria-label=保存并重启>
+                <svg class=btn-icon viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4Z"/></svg>
+                保存并重启
+            </button>
+        </div>
     </div>
-    <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+    <div class=toast id=toast role=alert aria-live=assertive></div>
 
-    <!-- 重启确认弹窗 -->
-    <div class="dialog-overlay" id="dialogOverlay">
-        <div class="dialog" role="dialog" aria-modal="true">
-            <div class="dialog-title">确认重启</div>
-            <div class="dialog-msg">保存配置后需要重启才能生效，确定现在重启吗？</div>
-            <div class="dialog-actions">
-                <button class="dialog-btn dialog-cancel" id="dialogCancel">取消</button>
-                <button class="dialog-btn dialog-confirm" id="dialogConfirm">重启</button>
+    
+    <div class=dialog-overlay id=settingsOverlay>
+        <div class="dialog dialog-settings" role=dialog aria-modal=true>
+            <div class=dialog-header>
+                <div class=dialog-title>⚙️ 设置</div>
+                <button class=dialog-close id=settingsClose aria-label=关闭>✕</button>
+            </div>
+            <div class=settings-content>
+                <div class=settings-section>
+                    <div class=settings-section-title>功能设置</div>
+                    <div class=settings-card>
+                        <div class=settings-item>
+                            <div class=settings-info>
+                                <div class=settings-name>自定义精简应用</div>
+                                <div class=settings-desc>开启后可添加系统应用进行精简，此为高级功能，操作不当可能影响系统稳定性</div>
+                            </div>
+                            <div class=toggle-wrap id=toggleAddApp role=switch aria-checked=false tabindex=0>
+                                <div class=toggle></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class=settings-section>
+                    <div class=settings-section-title>开发者选项</div>
+                    <div class=settings-card>
+                        <div class=settings-item>
+                            <div class=settings-info>
+                                <div class=settings-name>调试日志</div>
+                                <div class=settings-desc>记录操作日志，用于排查问题。日志保存在模块目录的 debug.log 文件中</div>
+                            </div>
+                            <div class=toggle-wrap id=toggleLog role=switch aria-checked=false tabindex=0>
+                                <div class=toggle></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 危险项确认弹窗 -->
-    <div class="dialog-overlay" id="dangerOverlay">
-        <div class="dialog" role="dialog" aria-modal="true">
-            <div class="dialog-title" style="color:var(--danger)">⚠️ 危险项确认</div>
-            <div class="dialog-msg">
-                <div style="font-weight:600;margin-bottom:8px" id="dangerAppName"></div>
-                <div id="dangerDesc" style="color:var(--text2)"></div>
-            </div>
-            <div class="dialog-actions">
-                <button class="dialog-btn dialog-cancel" id="dangerCancel">取消</button>
-                <button class="dialog-btn dialog-confirm-danger" id="dangerConfirm">确认精简</button>
+    
+    <div class=dialog-overlay id=dialogOverlay>
+        <div class=dialog role=dialog aria-modal=true>
+            <div class=dialog-title>确认重启</div>
+            <div class=dialog-msg>保存配置后需要重启才能生效，确定现在重启吗？</div>
+            <div class=dialog-actions>
+                <button class="dialog-btn dialog-cancel" id=dialogCancel>取消</button>
+                <button class="dialog-btn dialog-confirm" id=dialogConfirm>重启</button>
             </div>
         </div>
     </div>
 
-    <script>
-(() => {
-  // node_modules/kernelsu/index.js
-  var callbackCounter = 0;
-  function getUniqueCallbackName(prefix) {
-    return `${prefix}_callback_${Date.now()}_${callbackCounter++}`;
-  }
-  function exec(command, options) {
-    if (typeof options === "undefined") {
-      options = {};
-    }
-    return new Promise((resolve, reject) => {
-      const callbackFuncName = getUniqueCallbackName("exec");
-      window[callbackFuncName] = (errno, stdout, stderr) => {
-        resolve({ errno, stdout, stderr });
-        cleanup(callbackFuncName);
-      };
-      function cleanup(successName) {
-        delete window[successName];
-      }
-      try {
-        ksu.exec(command, JSON.stringify(options), callbackFuncName);
-      } catch (error) {
-        reject(error);
-        cleanup(callbackFuncName);
-      }
-    });
-  }
-  function Stdio() {
-    this.listeners = {};
-  }
-  Stdio.prototype.on = function(event, listener) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
-    }
-    this.listeners[event].push(listener);
-  };
-  Stdio.prototype.emit = function(event, ...args) {
-    if (this.listeners[event]) {
-      this.listeners[event].forEach((listener) => listener(...args));
-    }
-  };
-  function ChildProcess() {
-    this.listeners = {};
-    this.stdin = new Stdio();
-    this.stdout = new Stdio();
-    this.stderr = new Stdio();
-  }
-  ChildProcess.prototype.on = function(event, listener) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
-    }
-    this.listeners[event].push(listener);
-  };
-  ChildProcess.prototype.emit = function(event, ...args) {
-    if (this.listeners[event]) {
-      this.listeners[event].forEach((listener) => listener(...args));
-    }
-  };
+    
+    <div class=dialog-overlay id=dangerOverlay>
+        <div class=dialog role=dialog aria-modal=true>
+            <div class=dialog-title style=color:var(--danger)>⚠️ 危险项确认</div>
+            <div class=dialog-msg>
+                <div style=margin-bottom:8px;font-weight:600 id=dangerAppName></div>
+                <div id=dangerDesc style=color:var(--text2)></div>
+            </div>
+            <div class=dialog-actions>
+                <button class="dialog-btn dialog-cancel" id=dangerCancel>取消</button>
+                <button class="dialog-btn dialog-confirm-danger" id=dangerConfirm>确认精简</button>
+            </div>
+        </div>
+    </div>
 
-  // webroot/app.js
-  var apps = [];
-  var changed = false;
-  var searchQuery = "";
-  var MODPATH = "/data/adb/modules/HyperOS3_Debloat";
-  var DANGEROUS_GROUPS = ["\u5371\u9669\u9879"];
-  function initTheme() {
-    const saved = localStorage.getItem("theme");
-    if (saved) {
-      document.documentElement.setAttribute("data-theme", saved);
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
-    }
-    updateThemeIcon();
-  }
-  function toggleTheme() {
-    const current = document.documentElement.getAttribute("data-theme");
-    const next = current === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    updateThemeIcon();
-  }
-  function updateThemeIcon() {
-    const btn = document.getElementById("btnTheme");
-    if (!btn) return;
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    btn.innerHTML = isDark ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>' : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-    btn.setAttribute("aria-label", isDark ? "\u5207\u6362\u4EAE\u8272\u6A21\u5F0F" : "\u5207\u6362\u6697\u8272\u6A21\u5F0F");
-  }
-  function toast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 3e3);
-  }
-  async function log(msg) {
-    const ts = (/* @__PURE__ */ new Date()).toLocaleString("zh-CN", { hour12: false });
-    const line = "[" + ts + "] " + msg;
-    try {
-      await exec("echo '" + line.replace(/'/g, "'\\''") + `' >> "` + MODPATH + '/webroot/debug.log"');
-    } catch (e) {
-    }
-  }
-  async function syncReplace(app) {
-    const dir = MODPATH + "/" + app.path;
-    if (app.status) {
-      await exec('mkdir -p "' + dir + '" && touch "' + dir + '/.replace"');
-    } else {
-      await exec('rm -rf "' + dir + '"');
-    }
-  }
-  function showDangerConfirm(app, toggleEl) {
-    const overlay = document.getElementById("dangerOverlay");
-    const nameEl = document.getElementById("dangerAppName");
-    const descEl = document.getElementById("dangerDesc");
-    nameEl.textContent = app.name;
-    const warnings = {
-      "NFC\u670D\u52A1": "\u7CBE\u7B80\u540E\u95E8\u7981\u5361\u3001\u516C\u4EA4\u5361\u3001\u4ED8\u6B3E\u529F\u80FD\u53EF\u80FD\u5931\u6548",
-      "\u7EAF\u51C0\u5B88\u62A4": "\u7CBE\u7B80\u540E\u53EF\u80FD\u5F71\u54CD\u5E94\u7528\u5B89\u5168\u68C0\u6D4B",
-      "\u641C\u72D7\u8F93\u5165\u6CD5": "\u8BF7\u786E\u4FDD\u5DF2\u5B89\u88C5\u5176\u4ED6\u8F93\u5165\u6CD5\uFF0C\u5426\u5219\u65E0\u6CD5\u8F93\u5165\u6587\u5B57",
-      "\u8BAF\u98DE\u8F93\u5165\u6CD5": "\u8BF7\u786E\u4FDD\u5DF2\u5B89\u88C5\u5176\u4ED6\u8F93\u5165\u6CD5\uFF0C\u5426\u5219\u65E0\u6CD5\u8F93\u5165\u6587\u5B57",
-      "\u7D27\u6025\u8B66\u62A5": "\u7CBE\u7B80\u540E\u6536\u4E0D\u5230\u5730\u9707\u3001\u707E\u5BB3\u7B49\u7D27\u6025\u9884\u8B66\u901A\u77E5",
-      "\u5C0F\u7C73\u667A\u80FD\u5361": "\u7CBE\u7B80\u540ENFC\u516C\u4EA4\u5361\u3001\u95E8\u7981\u5361\u3001\u4ED8\u6B3E\u529F\u80FD\u5168\u90E8\u5931\u6548",
-      "\u5C0F\u7C73\u667A\u80FD\u5361\u670D\u52A1": "\u7CBE\u7B80\u540ENFC\u516C\u4EA4\u5361\u3001\u95E8\u7981\u5361\u3001\u4ED8\u6B3E\u529F\u80FD\u5168\u90E8\u5931\u6548",
-      "\u7C73\u5E01\u652F\u4ED8": "\u7CBE\u7B80\u540E\u7C73\u5E01\u76F8\u5173\u652F\u4ED8\u529F\u80FD\u5931\u6548",
-      "\u5C0F\u7C73\u5E94\u7528\u5546\u5E97": "\u7CBE\u7B80\u540E\u65E0\u6CD5\u901A\u8FC7\u5B98\u65B9\u5546\u5E97\u4E0B\u8F7D\u5E94\u7528"
-    };
-    descEl.textContent = warnings[app.name] || "\u6B64\u5E94\u7528\u5C5E\u4E8E\u5371\u9669\u9879\uFF0C\u7CBE\u7B80\u540E\u53EF\u80FD\u5F71\u54CD\u7CFB\u7EDF\u529F\u80FD";
-    overlay.classList.add("show");
-    return new Promise((resolve) => {
-      const cancelBtn = document.getElementById("dangerCancel");
-      const confirmBtn = document.getElementById("dangerConfirm");
-      const cleanup = () => {
-        overlay.classList.remove("show");
-        cancelBtn.removeEventListener("click", onCancel);
-        confirmBtn.removeEventListener("click", onConfirm);
-      };
-      const onCancel = () => {
-        cleanup();
-        resolve(false);
-      };
-      const onConfirm = () => {
-        cleanup();
-        resolve(true);
-      };
-      cancelBtn.addEventListener("click", onCancel);
-      confirmBtn.addEventListener("click", onConfirm);
-    });
-  }
-  function initSearch() {
-    const input = document.getElementById("searchInput");
-    if (!input) return;
-    input.addEventListener("input", (e) => {
-      searchQuery = e.target.value.trim().toLowerCase();
-      render();
-    });
-  }
-  async function syncVersion() {
-    try {
-      const { stdout } = await exec('cat "' + MODPATH + '/module.prop"');
-      const match = stdout.match(/^version=(.+)$/m);
-      if (match) {
-        const el = document.getElementById("headerVersion");
-        if (el) el.textContent = match[1].trim() + " \xB7 KernelSU Module";
-      }
-    } catch (e) {
-    }
-  }
-  async function loadConfig() {
-    try {
-      const res = await fetch("./apps.conf");
-      if (!res.ok) throw new Error("\u65E0\u6CD5\u8BFB\u53D6 apps.conf");
-      const text = await res.text();
-      apps = text.split(/\r?\n/).reduce((acc, line) => {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith("#")) return acc;
-        const parts = trimmed.split("|");
-        if (parts.length >= 4) {
-          acc.push({
-            path: parts[0],
-            name: parts[1],
-            pkg: parts[2],
-            status: parts[3] === "1",
-            group: parts[4] || "\u5176\u4ED6"
-          });
-        }
-        return acc;
-      }, []);
-      render();
-    } catch (err) {
-      document.getElementById("apps").innerHTML = '<div class="empty-state"><div class="empty-icon">\u26A0\uFE0F</div><div class="empty-text">\u52A0\u8F7D\u5931\u8D25\uFF1A' + err.message + "</div></div>";
-    }
-  }
-  function render() {
-    const container = document.getElementById("apps");
-    const allDisabled = apps.filter((a) => a.status).length;
-    document.getElementById("stats").innerHTML = "\u5171 <b>" + apps.length + "</b> \u4E2A\u5E94\u7528\uFF0C\u5DF2\u7CBE\u7B80 <b>" + allDisabled + "</b> \u4E2A";
-    container.innerHTML = "";
-    const groups = {};
-    apps.forEach((app, i) => {
-      if (!groups[app.group]) groups[app.group] = [];
-      groups[app.group].push({ app, index: i });
-    });
-    const groupColors = {
-      "AI/\u5C0F\u7231": "#8b5cf6",
-      "\u6E38\u620F\u4E2D\u5FC3": "#f59e0b",
-      "\u8BBE\u5907\u4E92\u8054/\u751F\u6001": "#06b6d4",
-      "\u5E7F\u544A/\u8FFD\u8E2A": "#ef4444",
-      "\u5185\u5BB9/\u5DE5\u5177/\u5B89\u5168": "#10b981",
-      "\u7CFB\u7EDF\u670D\u52A1": "#6366f1",
-      "\u65E0\u969C\u788D/\u5B8F": "#ec4899",
-      "\u5371\u9669\u9879": "#ff3b3b",
-      "\u5176\u4ED6": "#64748b"
-    };
-    let groupIdx = 0;
-    for (const [groupName, items] of Object.entries(groups)) {
-      const filtered = searchQuery ? items.filter(({ app }) => app.name.toLowerCase().includes(searchQuery) || app.pkg.toLowerCase().includes(searchQuery)) : items;
-      if (filtered.length === 0) continue;
-      const groupDisabled = items.filter((x) => x.app.status).length;
-      const accentColor = groupColors[groupName] || "#64748b";
-      const isDangerous = DANGEROUS_GROUPS.includes(groupName);
-      const group = document.createElement("div");
-      group.className = groupIdx === 0 ? "group open" : "group";
-      groupIdx++;
-      if (isDangerous) group.classList.add("danger-group");
-      const header = document.createElement("div");
-      header.className = "group-header";
-      header.setAttribute("role", "button");
-      header.setAttribute("aria-expanded", groupIdx === 1 ? "true" : "false");
-      header.setAttribute("tabindex", "0");
-      header.innerHTML = '<div class="group-left">  <span class="group-accent" style="background:' + accentColor + (isDangerous ? ";box-shadow:0 0 8px " + accentColor + "60" : "") + '"></span>  <span class="group-name">' + groupName + (isDangerous ? ' <span class="danger-tag">\u26A0</span>' : "") + '</span>  <span class="group-badge" style="background:' + accentColor + "18;color:" + accentColor + ";border:1px solid " + accentColor + '30">' + groupDisabled + "/" + items.length + '</span></div><svg class="group-arrow" viewBox="0 0 24 24"><path d="M10 6l6 6-6 6z"/></svg>';
-      header.addEventListener("click", () => {
-        const isOpen = group.classList.contains("open");
-        const bodyEl = group.querySelector(".group-body");
-        if (isOpen) {
-          bodyEl.style.maxHeight = bodyEl.scrollHeight + "px";
-          requestAnimationFrame(() => {
-            bodyEl.style.maxHeight = "0px";
-            bodyEl.style.opacity = "0";
-          });
-          group.classList.remove("open");
-        } else {
-          bodyEl.style.maxHeight = bodyEl.scrollHeight + "px";
-          bodyEl.style.opacity = "1";
-          group.classList.add("open");
-          setTimeout(() => {
-            if (group.classList.contains("open")) bodyEl.style.maxHeight = "none";
-          }, 300);
-        }
-        header.setAttribute("aria-expanded", !isOpen);
-      });
-      header.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          header.click();
-        }
-      });
-      const body = document.createElement("div");
-      body.className = "group-body";
-      const inner = document.createElement("div");
-      inner.className = "group-body-inner";
-      filtered.forEach(({ app, index }) => {
-        const item = document.createElement("div");
-        item.className = "app-item";
-        if (isDangerous && app.status) item.classList.add("danger-active");
-        item.innerHTML = '<div class="app-info">  <span class="app-name">' + app.name + (isDangerous ? ' <span class="danger-dot"></span>' : "") + '</span>  <span class="app-pkg">' + app.pkg + '</span></div><div class="toggle-wrap' + (app.status ? " on" : "") + '" role="switch" aria-checked="' + app.status + '" aria-label="' + app.name + '" tabindex="0" data-index="' + index + '" data-danger="' + isDangerous + '">  <div class="toggle"></div></div>';
-        inner.appendChild(item);
-      });
-      body.appendChild(inner);
-      group.appendChild(header);
-      group.appendChild(body);
-      container.appendChild(group);
-    }
-    if (container.children.length === 0 && searchQuery) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-icon">\u{1F50D}</div><div class="empty-text">\u672A\u627E\u5230\u5339\u914D\u7684\u5E94\u7528</div></div>';
-    }
-    bindToggles();
-    const firstBody = container.querySelector(".group.open .group-body");
-    if (firstBody) {
-      firstBody.style.maxHeight = firstBody.scrollHeight + "px";
-      firstBody.style.opacity = "1";
-      setTimeout(() => {
-        firstBody.style.maxHeight = "none";
-      }, 300);
-    }
-  }
-  function bindToggles() {
-    document.querySelectorAll(".toggle-wrap").forEach((toggle) => {
-      const handler = async function() {
-        const idx = parseInt(this.dataset.index);
-        const isDanger = this.dataset.danger === "true";
-        const willEnable = !apps[idx].status;
-        if (isDanger && willEnable) {
-          const confirmed = await showDangerConfirm(apps[idx], this);
-          if (!confirmed) return;
-        }
-        apps[idx].status = !apps[idx].status;
-        this.classList.toggle("on");
-        this.setAttribute("aria-checked", apps[idx].status);
-        changed = true;
-        const appItem = this.closest(".app-item");
-        if (isDanger) {
-          appItem.classList.toggle("danger-active", apps[idx].status);
-        }
-        await syncReplace(apps[idx]);
-        await log("\u5207\u6362 " + apps[idx].name + " \u2192 " + (apps[idx].status ? "\u7CBE\u7B80" : "\u4FDD\u7559"));
-        const disabled = apps.filter((a) => a.status).length;
-        document.getElementById("stats").innerHTML = "\u5171 <b>" + apps.length + "</b> \u4E2A\u5E94\u7528\uFF0C\u5DF2\u7CBE\u7B80 <b>" + disabled + "</b> \u4E2A";
-        const groupEl = this.closest(".group");
-        const gName = groupEl.querySelector(".group-name").textContent.replace(" \u26A0", "").trim();
-        const gItems = apps.filter((a) => a.group === gName);
-        const gDisabled = gItems.filter((a) => a.status).length;
-        groupEl.querySelector(".group-badge").textContent = gDisabled + "/" + gItems.length;
-      };
-      toggle.addEventListener("click", handler);
-      toggle.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handler.call(toggle);
-        }
-      });
-    });
-  }
-  async function saveConfig() {
-    const btn = document.getElementById("btnSave");
-    btn.disabled = true;
-    const target = MODPATH + "/webroot/apps.conf";
-    const disabled = apps.filter((a) => a.status).length;
-    await log("\u4FDD\u5B58\u914D\u7F6E... \u5DF2\u7CBE\u7B80 " + disabled + "/" + apps.length);
-    try {
-      await exec('cat > "' + target + `" << 'EOF'
-# HyperOS3 Debloat \u914D\u7F6E
-# \u683C\u5F0F\uFF1A\u8DEF\u5F84|\u663E\u793A\u540D|\u5305\u540D|\u72B6\u6001\uFF081=\u7CBE\u7B80 0=\u4FDD\u7559\uFF09|\u5206\u7EC4
-EOF`);
-      let saved = 0;
-      for (const app of apps) {
-        const line = app.path + "|" + app.name + "|" + app.pkg + "|" + (app.status ? "1" : "0") + "|" + app.group;
-        await exec("echo '" + line.replace(/'/g, "'\\''") + `' >> "` + target + '"');
-        saved++;
-      }
-      await log("\u4FDD\u5B58\u6210\u529F\uFF0C\u5171\u5199\u5165 " + saved + " \u6761");
-      toast("\u914D\u7F6E\u5DF2\u4FDD\u5B58");
-      changed = false;
-    } catch (err) {
-      await log("\u4FDD\u5B58\u5931\u8D25\uFF1A" + err.message);
-      toast("\u4FDD\u5B58\u5931\u8D25\uFF1A" + err.message);
-    } finally {
-      btn.disabled = false;
-    }
-  }
-  async function doReboot() {
-    await log("\u7528\u6237\u89E6\u53D1\u91CD\u542F");
-    try {
-      await exec("svc power reboot");
-    } catch (err) {
-      await log("\u91CD\u542F\u5931\u8D25\uFF1A" + err.message);
-      toast("\u91CD\u542F\u5931\u8D25\uFF0C\u8BF7\u624B\u52A8\u91CD\u542F");
-    }
-  }
-  initTheme();
-  document.getElementById("btnTheme").addEventListener("click", toggleTheme);
-  document.getElementById("btnSave").addEventListener("click", saveConfig);
-  document.getElementById("btnReboot").addEventListener("click", () => {
-    document.getElementById("dialogOverlay").classList.add("show");
-  });
-  document.getElementById("dialogCancel").addEventListener("click", () => {
-    document.getElementById("dialogOverlay").classList.remove("show");
-  });
-  document.getElementById("dialogConfirm").addEventListener("click", async () => {
-    document.getElementById("dialogOverlay").classList.remove("show");
-    await saveConfig();
-    await doReboot();
-  });
-  window.addEventListener("beforeunload", (e) => {
-    if (changed) {
-      e.preventDefault();
-      e.returnValue = "";
-    }
-  });
-  initSearch();
-  syncVersion();
-  loadConfig();
-})();
-    </script>
-</body>
-</html>
+    
+    <div class=dialog-overlay id=addOverlay>
+        <div class="dialog dialog-fullscreen" role=dialog aria-modal=true>
+            <div class=dialog-header>
+                <div class=dialog-title>➕ 增加应用</div>
+                <button class=dialog-close id=addClose aria-label=关闭>✕</button>
+            </div>
+            <div class=dialog-search>
+                <svg viewBox="0 0 24 24"><circle cx=11 cy=11 r=8 /><path d="m21 21-4.35-4.35"/></svg>
+                <input id=addSearch placeholder=搜索应用名或包名… autocomplete=off>
+            </div>
+            <div class=dialog-stats id=addStats>正在加载…</div>
+            <div class=dialog-list id=addList></div>
+            <div class=dialog-footer>
+                <div class=dialog-selected>已选 <span id=addCount>0</span> 个</div>
+                <div class=dialog-actions>
+                    <button class="dialog-btn dialog-cancel" id=addCancel>取消</button>
+                    <button class="dialog-btn dialog-confirm" id=addConfirm disabled>添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class=dialog-overlay id=customOverlay>
+        <div class=dialog role=dialog aria-modal=true>
+            <div class=dialog-title style=color:var(--danger)>⚠️ 确认精简</div>
+            <div class=dialog-msg>
+                <div style=margin-bottom:8px;font-weight:600 id=customAppName></div>
+                <div style=color:var(--text3);margin-bottom:8px;font-size:.75em id=customAppPkg></div>
+                <div style=color:var(--text2)>此应用不在预设列表中，精简后可能影响系统功能，建议谨慎操作。</div>
+            </div>
+            <div class=dialog-actions>
+                <button class="dialog-btn dialog-cancel" id=customCancel>取消</button>
+                <button class="dialog-btn dialog-confirm-danger" id=customConfirm>确认精简</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class=dialog-overlay id=deleteOverlay>
+        <div class=dialog role=dialog aria-modal=true>
+            <div class=dialog-title>移除应用</div>
+            <div class=dialog-msg>确定从列表移除 <span id=deleteAppName style=font-weight:600></span>？</div>
+            <div class=dialog-actions>
+                <button class="dialog-btn dialog-cancel" id=deleteCancel>取消</button>
+                <button class="dialog-btn dialog-confirm" id=deleteConfirm>移除</button>
+            </div>
+        </div>
+    </div>
+
+    <script type=module src=HyperOS3-Debloat.a667b5f4.js></script>
+
+
